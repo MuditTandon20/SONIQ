@@ -1,4 +1,4 @@
-# Milestone 1 architecture
+# Architecture
 
 `python -m flowforge` calls `cli.main`. Four small modules own current responsibilities:
 
@@ -11,4 +11,18 @@ Capture uses blocking 50 ms reads directly into a temporary WAV. It never accumu
 
 PyAV, already required by faster-whisper, handles downmixing/resampling. File transcription decodes the entire clip in memory: use short dictation clips, not multi-hour media. It does not implement streaming or backpressure. Model startup is measured separately from decoding and inference. Inference includes feature extraction, decoding and segment iteration; reported RTF excludes model load and file decoding.
 
-The only persistent data is explicitly requested audio, optional evaluation reports, and the upstream model cache. No settings file is needed yet: command arguments fully define each experiment. No UI, IPC, worker, database or network service exists.
+The CLI remains independent. Desktop additions are described below; there is still no database or network service.
+
+## Desktop data path
+
+React/TypeScript renders preferences and transcript/status inside Tauri's system WebView2. Rust owns shortcuts, CPAL capture, native insertion, clipboard, settings and worker supervision. Python owns faster-whisper, optional Silero VAD and conservative text cleanup. One worker exchanges newline-delimited JSON over stdin/stdout; stderr carries diagnostics. A Windows kill-on-close job prevents orphaned worker processes after a crash.
+
+1. A button or key press begins an explicit session. Shortcut recording snapshots supported focused-field metadata, never its text.
+2. A dedicated CPAL thread downmixes native-rate audio to mono int16 in a preallocated buffer capped at 120 seconds. The non-focusing indicator stays visible. Inference and disk writes happen outside the audio callback.
+3. Stop/release closes capture and writes a temporary WAV. Python uses PyAV to resample it to mono float32 16 kHz, reuses the loaded model and returns original/cleaned text plus timing.
+4. Rust checks worker generation and session ID, discarding late results. Optional insertion verifies window, process, field runtime ID, password/read-only/enabled state and modifiers. Failure leaves manual copying available. Windows cannot make the focus check and typing atomic, so insertion defaults off.
+5. Normal completion/cancellation drops session files. In-flight ASR cancellation kills/reloads the worker. A named mutex prevents multiple instances; startup removes app-owned stale capture directories.
+
+Live preview is optional: at most once every four seconds, a snapshot of the last twelve seconds goes to the same worker with beam 1. One request can be in flight. Final ASR uses the full clip with beam 5. A preview can delay final processing; partials remain provisional. This is rolling re-transcription, not cumulative stabilization, incremental decoding or automatic endpointing.
+
+Desktop settings use validated JSON and atomic replacement. Audio briefly resides in app-local captures; deletion is not secure erasure. No transcript history, text-content scraping, local LLM, training pipeline or cloud inference exists. PyInstaller bundles the worker/runtime as a folder resource; Tauri creates a per-user NSIS installer. Model preparation remains explicit.

@@ -1,8 +1,50 @@
 # FlowForge AI
 
-Local, Windows-first speech recognition. Milestone 1 provides a Python CLI for microphone capture, audio-file transcription, and reference-based model evaluation. Desktop shortcuts and text insertion are later work.
+Local, Windows-first voice dictation with a Tauri desktop interface and a reusable Python speech engine. Audio recognition stays on your device. The CLI remains available for recording, evaluation and experiments.
 
 Application code is MIT licensed; dependencies, evaluation audio and model weights retain their own licenses.
+
+## Desktop (Windows PowerShell)
+
+After the Python setup below, install the desktop dependencies and run:
+
+```powershell
+npm ci
+npm run desktop
+```
+
+Development requires Node 22.12+, Rust stable with the MSVC target, Visual Studio C++ Build Tools and Windows WebView2. The installed application bundles Python and its inference libraries; development uses `.venv\Scripts\python.exe`.
+
+1. Wait for the local engine to become ready. If weights are missing, select **Download selected model**; downloading is explicit.
+2. Click the microphone to start/stop a preview recording, or hold **Ctrl+Alt+Space** while another text field is focused. Release it to transcribe. Preferences can change the shortcut and microphone.
+3. A separate indicator stays visible without taking focus. Each recording is capped at 120 seconds. Cancel using the app/indicator button, or Escape while the main app is focused.
+4. Review the transcript and switch to **Original** to recover the ASR result. **Copy** explicitly writes the selected transcript to the Windows clipboard.
+5. Optional automatic insertion verifies the original window, process, UI Automation field identity and password status. It never restores focus or reads target text. A changed or unsupported target keeps the transcript for manual copying.
+
+Automatic insertion is off by default. Windows offers no atomic focus-check-and-type operation: another app can change focus in the brief interval before Unicode input delivery. Use manual copy for sensitive applications. Multiline/control-character transcripts also require manual copying to avoid sending form-submission keys. Elevated apps, protected fields, custom editors and providers without reliable accessibility metadata may reject insertion. Successful input delivery cannot prove the application accepted every character. Notepad and browser-field acceptance checks must be reported separately from native unit tests.
+
+Preferences offer English/Hindi/automatic language detection, tiny/base/small models, int8/float32 CPU execution, terminology hints, optional Silero silence filtering, and opt-in cleanup. Verbatim is the default. Cleanup only adjusts whitespace, optional “um”/“uh” removal, and sentence paragraph breaks; digit-bearing and recognizable technical text stays verbatim. Names and facts still require review. No LLM is enabled without a fixed-set quality comparison demonstrating a useful improvement.
+
+Experimental live preview refreshes a rolling 12-second window at most once every four seconds, with one request in flight. It is provisional, may repeat/change text, and is never inserted. Final ASR uses the complete bounded recording. This is windowed re-transcription, not an incremental Whisper decoder. Silence filtering does not automatically stop recording; the user controls boundaries.
+
+Settings are validated and atomically replaced under `%APPDATA%\ai.flowforge.desktop\settings.json`. Temporary desktop captures live under `%LOCALAPPDATA%\ai.flowforge.desktop\captures`; normal completion/cancellation removes them, and startup removes leftover app-owned session directories after crashes. Deletion is not secure erasure. A named Windows mutex prevents multiple app instances. Closing the app exits and terminates its supervised worker. No autostart or background microphone activation is configured.
+
+## Build an installer
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -e '.[test,package]'
+npm run package
+```
+
+This packages the speech worker with PyInstaller and creates a per-user NSIS installer under `src-tauri\target\release\bundle\nsis`. Model weights are downloaded separately; they are not embedded or committed. WebView2 installation may require a download if the Windows runtime is missing. Local builds are unsigned, so Windows may show an unknown-publisher warning. This is not a claim of code signing, clean-machine validation or a published GitHub release.
+
+```powershell
+npm run build
+cargo test --locked --manifest-path src-tauri/Cargo.toml
+cargo fmt --manifest-path src-tauri/Cargo.toml --check
+```
+
+The Windows GitHub Actions workflow runs Python, frontend and Rust checks; configuring a workflow is separate from observing it pass remotely.
 
 ## Setup (Windows PowerShell)
 
@@ -50,4 +92,13 @@ JSON is printed to the terminal. Transcripts are persisted only if you explicitl
 
 ## Verification and boundaries
 
-See [CHALLENGES](docs/CHALLENGES.md) for actual verification results and limitations, [DECISIONS](docs/DECISIONS.md) for dependencies, [ARCHITECTURE](docs/ARCHITECTURE.md) for the execution path, and [LEARNING](docs/LEARNING.md) for the concepts. Tests create real audio files but mock microphone capture and model lifecycle where hardware independence is needed. Those tests do not prove a physical microphone works. GPU execution, Hindi/Hinglish evaluation, peak memory, CPU utilization, and interactive capture latency are not validated in this milestone.
+See [CHALLENGES](docs/CHALLENGES.md) for actual verification results and limitations, [DECISIONS](docs/DECISIONS.md) for dependencies, [ARCHITECTURE](docs/ARCHITECTURE.md) for execution paths, and [LEARNING](docs/LEARNING.md) for concepts. Tests create real audio files but mock microphone capture and model lifecycle where hardware independence is needed. Those tests do not prove a physical microphone works. GPU execution, Hindi/Hinglish accuracy, CPU utilization and interactive capture latency remain unverified unless explicitly recorded there. Do not infer release readiness from unit tests or one familiar English sample.
+
+## Chunk-size experiments
+
+```powershell
+.\.venv\Scripts\python.exe -m flowforge experiment reports\evaluation.jsonl --model tiny --chunks 4 8 12 --language en --report reports\chunks.json
+.\.venv\Scripts\python.exe -m flowforge experiment reports\evaluation.jsonl --model tiny --chunks 4 8 12 --language en --vad --report reports\chunks-vad.json
+```
+
+Models must already be cached. Independent non-overlapping chunks report corpus WER/CER, per-chunk latency, RTF and Windows peak process memory. Punctuation/boundary differences may be hidden by normalized WER. This experiment does not measure live microphone-to-preview latency or stabilized streaming. Use a held-out, consented multilingual corpus before quality conclusions or fine-tuning.

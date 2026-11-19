@@ -29,12 +29,22 @@ class Transcriber:
                                   local_files_only=True)
         self.load_seconds = perf_counter() - started
 
-    def transcribe(self, path: Path, language: str | None = None, beam_size: int = 5) -> dict:
+    def transcribe(self, path: Path, language: str | None = None, beam_size: int = 5,
+                   vad: bool = False, hotwords: str | None = None) -> dict:
         if beam_size < 1:
             raise ValueError("Beam size must be positive.")
         started = perf_counter()
         audio = load_audio(path)
         decode_seconds = perf_counter() - started
+        result = self.transcribe_samples(audio, language, beam_size, vad, hotwords)
+        return dict(result, audio=str(path), decode_seconds=decode_seconds)
+
+    def transcribe_samples(self, audio: np.ndarray, language: str | None = None,
+                           beam_size: int = 5, vad: bool = False, hotwords: str | None = None) -> dict:
+        """Recognize mono 16 kHz samples, also used for measured chunk experiments."""
+        if (audio.ndim != 1 or not audio.size or not np.isfinite(audio).all()
+                or beam_size < 1):
+            raise ValueError("Expected nonempty finite mono 16 kHz samples and a positive beam size.")
         duration = len(audio) / 16000
         started = perf_counter()
         text = ""
@@ -42,10 +52,10 @@ class Transcriber:
         # Exact digital silence is deterministic; quiet speech is not discarded.
         if np.any(audio):
             segments, info = self.model.transcribe(audio, language=language, beam_size=beam_size,
-                                                    vad_filter=False, task="transcribe")
+                                                    vad_filter=vad, task="transcribe", hotwords=hotwords)
             text = "".join(segment.text for segment in segments).strip()
             detected = info.language
         elapsed = perf_counter() - started
-        return {"audio": str(path), "text": text, "language": detected,
-                "audio_seconds": duration, "decode_seconds": decode_seconds,
+        return {"text": text, "language": detected,
+                "audio_seconds": duration,
                 "inference_seconds": elapsed, "real_time_factor": elapsed / duration}

@@ -1,0 +1,6 @@
+{
+  "identifier": "app-windows",
+  "description": "Bundled app windows can receive state and call application commands.",
+  "windows": ["main", "indicator"],
+  "permissions": ["core:default"]
+}

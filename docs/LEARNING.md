@@ -21,3 +21,19 @@ Real-time factor is inference seconds divided by audio seconds. RTF below 1 mean
 Record the same short English, Hindi and Hinglish sentences with consent and manually verify references. Compare tiny/base, int8/float32 and beam 1/5 separately. Keep the corpus fixed; record startup and inference independently. Include silence, quiet speech, proper nouns and code identifiers. Repeated passes measure timing variation, not new independent accuracy evidence. Do not fine-tune on the test set.
 
 Explain: Why is changing a WAV header insufficient to resample? Why must a lazy generator be consumed before timing ends? Why does loading the model per sentence harm responsiveness? Why can WER exceed 100%? Which tests require actual devices? Why do Unicode marks matter in Hindi? The code and tests provide concrete examples for each answer.
+
+## Desktop state, resource ownership and safety
+
+Rust maintains loading → ready → recording → transcribing → ready, plus cancellation/error paths. React observes snapshots/events; it does not own microphone state. A session identifies each recording, while a worker generation identifies each Python lifetime. Checking both prevents valid but stale JSON from becoming a new transcript. The audio callback only downmixes into bounded storage; disk snapshots and inference must not hold its lock or the driver callback may stall.
+
+NDJSON means one JSON object per line. `worker.py` flushes a response per command; diagnostics cannot enter stdout. Cancellation during native inference kills/reloads the worker because the current call is not cooperatively interruptible. That costs model startup but actually stops computation. Windows jobs terminate orphaned children; the named mutex prevents two instances racing on settings and capture cleanup.
+
+A focused window and a specific field inside it are different identities. Window-only checks can type into the wrong browser field. `native.rs` compares opaque field runtime IDs and process metadata, rejects passwords and reads no field text. COM initialization belongs to the calling thread. SendInput success means input was queued, not proof that an editor stored it. The focus/input race explains opt-in insertion and the manual-copy path.
+
+## Lessons from measured chunks
+
+On the 11-second JFK clip, independent 4/8/12-second windows with beam 1 and both VAD settings produced zero normalized WER/CER. Four-second boundaries changed punctuation and increased total inference work. Punctuation-stripping metrics hide formatting differences. VAD needs silence/noise/quiet-speech examples to evaluate fairly; this speech-heavy clip cannot establish its quality. Rolling overlapping preview is a different experiment from independent chunks.
+
+Windows peak working set covers the entire experiment process across configurations. It is not per-model memory and excludes Rust/WebView2. Repeating one clip estimates timing variation, not general English/Hindi/Hinglish accuracy. No fine-tuning or LLM claim is justified without licensed held-out examples and meaning-preservation checks.
+
+Practice explaining stale-result safety, callback lock contention, COM/handle ownership, final latency with preview on/off, and installer verification on a machine without Python. Current code provides concrete examples.

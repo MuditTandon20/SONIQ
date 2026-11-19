@@ -30,6 +30,13 @@ def main(argv=None) -> int:
     benchmark.add_argument("manifest", type=Path)
     benchmark.add_argument("--repeats", type=int, default=1)
     benchmark.add_argument("--report", type=Path, help="Opt-in storage of transcripts and references")
+    experiment = commands.add_parser("experiment", help="Measure chunk-size accuracy and latency")
+    experiment.add_argument("manifest", type=Path)
+    experiment.add_argument("--model", default="tiny")
+    experiment.add_argument("--chunks", type=float, nargs="+", default=[4, 8, 12])
+    experiment.add_argument("--language")
+    experiment.add_argument("--vad", action="store_true")
+    experiment.add_argument("--report", type=Path)
     for command in (transcription, benchmark):
         command.add_argument("--model", nargs="+" if command is benchmark else None,
                              default=["base"] if command is benchmark else "base")
@@ -48,6 +55,14 @@ def main(argv=None) -> int:
             input("Press Enter to start microphone recording (Ctrl+C cancels): ")
             result = record(args.output, args.seconds, args.device)
             print("Recording stopped.", flush=True)
+        elif args.command == "experiment":
+            from .experiments import compare_chunks
+            result = compare_chunks(read_manifest(args.manifest), args.model, args.chunks,
+                                    args.language, args.vad)
+            if args.report:
+                args.report.parent.mkdir(parents=True, exist_ok=True)
+                with args.report.open("x", encoding="utf-8") as output:
+                    json.dump(result, output, ensure_ascii=False, indent=2)
         else:
             if args.beam_size < 1:
                 raise ValueError("Beam size must be positive.")

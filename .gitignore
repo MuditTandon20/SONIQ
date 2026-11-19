@@ -10,3 +10,12 @@ reports/
 *.mp3
 *.flac
 *.jsonl
+node_modules/
+dist/
+src-tauri/target/
+src-tauri/gen/
+src-tauri/resources/
+build/
+*.spec
+artifacts/
+test-results/

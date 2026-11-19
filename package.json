@@ -1,0 +1,27 @@
+{
+  "name": "flowforge-ai-desktop",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "tauri": "tauri",
+    "desktop": "tauri dev",
+    "package:worker": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-worker.ps1",
+    "package": "npm run package:worker && tauri build --config src-tauri/tauri.release.conf.json"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.9.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.9.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.0",
+    "@vitejs/plugin-react": "^5.1.0"
+  }
+}

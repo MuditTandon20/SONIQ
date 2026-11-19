@@ -1,6 +1,8 @@
 # Engineering standards
 
-Build only the assigned milestone. Milestone 1 is a Python CLI; do not add desktop, web, database, streaming, LLM, or cloud infrastructure. Stop before Milestone 2.
+The owner paused work on 2026-11-20 and will say “continue” to resume. Resume from the checkpoint in docs/ROADMAP.md; do not restart implementation or redo completed dependency setup. No microphone recording has been activated during development.
+
+The owner has now authorized the remaining milestones together. Deliver the Windows desktop dictation application incrementally, verifying each boundary before expanding it. Preserve the working Python CLI. Do not claim untested hardware, ML quality, or release checks are complete. Optional LLM processing and fine-tuning still require evidence of benefit.
 
 Inspect existing work before editing. Prefer focused functions and standard-library solutions. Justify each dependency in docs/DECISIONS.md. No speculative interfaces, scaffolding, or fake ASR. Keep model initialization outside per-file transcription.
 
