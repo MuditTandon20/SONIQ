@@ -43,3 +43,7 @@ Practice explaining stale-result safety, callback lock contention, COM/handle ow
 ## Input delivery is not text acceptance
 
 The actual insertion fixtures exposed a boundary that a successful `SendInput` count cannot verify: the target app can receive input events and still produce different text. `native.rs` now uses synchronous character messages only for a verified Unicode RichEdit window and paced per-character input elsewhere. It checks field identity and cancellation between characters. The fixed-text helper verifies the result in its own generated documents; application code never reads target text. Already delivered characters cannot be undone safely by Cancel.
+
+## Automatic input selection does not mean automatic recording
+
+`capture.rs` separates device choice from opening a capture stream. Device names and the Windows default can be queried without recording. On an explicit start, a missing preferred microphone falls back to the current default, while the preference stays saved for reconnection. Mock selection tests cover this policy; a physical disconnect/reconnect recording still requires its own observed check.

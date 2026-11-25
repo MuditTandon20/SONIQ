@@ -158,17 +158,22 @@ export function App() {
   useEffect(() => {
     if (!isTauri()) return;
     let disposed = false;
-    void invoke<string[]>("microphones")
-      .then((result) => {
-        if (!disposed) setDevices(result);
-      })
-      .catch((cause) => {
-        if (!disposed) setError(String(cause));
-      });
+    function refresh() {
+      void invoke<string[]>("microphones")
+        .then((result) => {
+          if (!disposed) setDevices(result);
+        })
+        .catch((cause) => {
+          if (!disposed) setError(String(cause));
+        });
+    }
+    refresh();
+    window.addEventListener("focus", refresh);
     return () => {
       disposed = true;
+      window.removeEventListener("focus", refresh);
     };
-  }, []);
+  }, [page]);
   useEffect(() => {
     function cancel(event: KeyboardEvent) {
       if (
@@ -384,7 +389,7 @@ export function App() {
                 </div>
                 <div className="shortcut-strip">
                   <span>Dictate in another app</span>
-                  <kbd>{settings?.shortcut ?? "Ctrl+Alt+Space"}</kbd>
+                  <kbd>{settings?.shortcut ?? "Ctrl+Space"}</kbd>
                   <span>hold to talk · release to finish</span>
                 </div>
               </section>
@@ -490,18 +495,27 @@ export function App() {
                   </select>
                 </label>
                 <label>
-                  Microphone
+                  Microphone preference
                   <select
                     value={settings.microphone}
                     onChange={(e) => setting("microphone", e.target.value)}
                   >
-                    <option value="">Windows default input</option>
+                    <option value="">Automatic · Windows input</option>
+                    {settings.microphone && !devices.includes(settings.microphone) ? (
+                      <option value={settings.microphone}>
+                        {settings.microphone} · not listed; automatic fallback
+                      </option>
+                    ) : null}
                     {[...new Set(devices)].map((name) => (
                       <option key={name} value={name}>
                         {name}
                       </option>
                     ))}
                   </select>
+                  <small>
+                    Uses your preferred microphone when available, otherwise the
+                    Windows input. Each recording checks again automatically.
+                  </small>
                 </label>
                 <label>
                   CPU precision

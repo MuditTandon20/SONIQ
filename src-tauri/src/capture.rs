@@ -24,16 +24,32 @@ pub struct Audio {
     pub error: Option<String>,
 }
 
-pub fn start(name: &str) -> Result<(cpal::Stream, Arc<Mutex<Audio>>), String> {
-    let host = cpal::default_host();
-    let device = if name.is_empty() {
-        host.default_input_device()
-    } else {
-        host.input_devices()
-            .map_err(|e| e.to_string())?
-            .find(|d| d.name().ok().as_deref() == Some(name))
+fn select_input<T>(
+    preferred: &str,
+    mut inputs: impl Iterator<Item = (String, T)>,
+    default: impl FnOnce() -> Option<T>,
+) -> Option<T> {
+    if !preferred.is_empty() {
+        if let Some((_, input)) = inputs.find(|(name, _)| name == preferred) {
+            return Some(input);
+        }
     }
-    .ok_or("Microphone unavailable. Reconnect it or choose another input.")?;
+    default()
+}
+
+pub fn start(name: &str) -> Result<(cpal::Stream, Arc<Mutex<Audio>>, String), String> {
+    let host = cpal::default_host();
+    // Re-enumerate for each explicit recording. Keep the saved preference so a
+    // reconnected headset is used again; do not pin the temporary fallback.
+    let inputs = host
+        .input_devices()
+        .ok()
+        .into_iter()
+        .flatten()
+        .filter_map(|device| device.name().ok().map(|name| (name, device)));
+    let device = select_input(name, inputs, || host.default_input_device())
+        .ok_or("No microphone available. Connect one or check Windows input settings.")?;
+    let input_name = device.name().unwrap_or_else(|_| "Windows input".into());
     let supported = device.default_input_config().map_err(|e| e.to_string())?;
     let rate = supported.sample_rate().0;
     let config: cpal::StreamConfig = supported.clone().into();
@@ -54,7 +70,7 @@ pub fn start(name: &str) -> Result<(cpal::Stream, Arc<Mutex<Audio>>), String> {
     }
     .map_err(|e| e.to_string())?;
     stream.play().map_err(|e| e.to_string())?;
-    Ok((stream, audio))
+    Ok((stream, audio, input_name))
 }
 
 fn stream<T>(
@@ -115,6 +131,40 @@ pub fn save(path: &Path, rate: u32, samples: &[i16]) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn preferred_headset_falls_back_and_is_restored_after_reconnection() {
+        let connected = || vec![("Laptop".into(), 1), ("Headset".into(), 2)].into_iter();
+        assert_eq!(
+            select_input("Headset", connected(), || panic!(
+                "Do not use the default when the headset is present"
+            )),
+            Some(2)
+        );
+        assert_eq!(
+            select_input("Headset", vec![("Laptop".into(), 1)].into_iter(), || Some(
+                1
+            )),
+            Some(1)
+        );
+        assert_eq!(select_input("Headset", connected(), || Some(1)), Some(2));
+    }
+
+    #[test]
+    fn automatic_input_resolves_the_current_default_each_time() {
+        assert_eq!(
+            select_input("", std::iter::empty::<(String, i32)>(), || Some(1)),
+            Some(1)
+        );
+        assert_eq!(
+            select_input("", std::iter::empty::<(String, i32)>(), || Some(2)),
+            Some(2)
+        );
+        assert_eq!(
+            select_input("Missing", std::iter::empty::<(String, i32)>(), || None),
+            None
+        );
+    }
+
     #[test]
     fn wav_has_expected_rate_and_frames() {
         let directory = tempfile::tempdir().unwrap();

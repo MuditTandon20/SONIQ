@@ -2,6 +2,8 @@
 
 ## Current continuation status - 2026-11-25
 
+Latest requested change: automatic fallback from an absent saved headset to the Windows input, restoration of that preference on the next recording after reconnect, visible input names, refreshed Preferences metadata and Ctrl+Space as the two-key default are implemented. The owner's active shortcut was updated with other preferences preserved. Nine Rust tests, strict Clippy, 47 Python tests, venv pip check and frontend build passed. A rebuilt release and startup check are in progress. No physical audio capture or unplug/replug test was activated by automation; those remain separate owner-guided checks.
+
 Latest guided checkpoint: the rebuilt release was opened ready/off with automatic insertion OFF. The owner was asked to start/stop a non-private recording for transcription cancellation. The observer timed out without a completed guided check and is no longer armed. No microphone was started by automation. Rearm the observer before asking the owner to repeat; do not mark this check passed. The app PID remains in ignored `artifacts/app.pid` and must be revalidated.
 
 - The owner authorized the remaining verification work, then requested automated checks before further guided microphone tests. Automated checks did not activate a microphone. Subsequent owner-guided capture checks are recorded separately.

@@ -237,7 +237,7 @@ fn start_recording(app: &tauri::AppHandle, external: bool) -> Result<(), String>
     state.preview_pending = false;
     state.view = View {
         phase: "recording".into(),
-        message: "Recording. Release the shortcut to transcribe.".into(),
+        message: "Opening your microphone…".into(),
         model_load_seconds: state.view.model_load_seconds,
         ..View::default()
     };
@@ -249,7 +249,18 @@ fn start_recording(app: &tauri::AppHandle, external: bool) -> Result<(), String>
     let app = app.clone();
     std::thread::spawn(move || {
         let result = (|| -> Result<(), String> {
-            let (stream, audio) = capture::start(&microphone)?;
+            let (stream, audio, input_name) = capture::start(&microphone)?;
+            {
+                let shared = app.state::<Shared>();
+                let mut state = shared.lock().unwrap();
+                if state.session != session || state.view.phase != "recording" {
+                    return Ok(());
+                }
+                state.view.message = format!(
+                    "Recording with {input_name}. Stop or release the shortcut to transcribe."
+                );
+                emit(&app, &state);
+            }
             let started = Instant::now();
             let mut last_preview = Instant::now();
             loop {

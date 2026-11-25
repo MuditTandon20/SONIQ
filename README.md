@@ -19,7 +19,7 @@ Development requires Node 22.12+, Rust stable with the MSVC target, Visual Studi
 
 1. Wait for the local engine to become ready. If weights are missing, select **Download selected model**; downloading is explicit.
    Check **Preferences → Microphone** and explicitly select the input you intend to speak into. **Windows default input** may still be the laptop microphone even when a headset is connected.
-2. Click the microphone to start/stop a preview recording, or hold **Ctrl+Alt+Space** while another text field is focused. Release it to transcribe. Preferences can change the shortcut and microphone.
+2. Click the microphone to start/stop a preview recording, or hold **Ctrl+Space** while another text field is focused. Release it to transcribe. Preferences can change the shortcut or preferred microphone. The recording status names the input actually in use. If a microphone disconnects during capture, the recording fails and is discarded; the next explicit recording checks devices again.
 3. A separate indicator stays visible without taking focus. Each recording is capped at 120 seconds. Cancel using the app/indicator button, or Escape while the main app is focused.
 4. Review the transcript and switch to **Original** to recover the ASR result. **Copy** explicitly writes the selected transcript to the Windows clipboard.
 5. Optional automatic insertion verifies the original window, process, UI Automation field identity and password status. It never restores focus or reads target text. A changed or unsupported target keeps the transcript for manual copying.

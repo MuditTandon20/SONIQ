@@ -24,7 +24,7 @@ impl Default for Settings {
             compute_type: "int8".into(),
             language: "auto".into(),
             microphone: String::new(),
-            shortcut: "Ctrl+Alt+Space".into(),
+            shortcut: "Ctrl+Space".into(),
             mode: "verbatim".into(),
             remove_fillers: false,
             auto_insert: false,
@@ -49,7 +49,7 @@ impl Settings {
             return Err("Setting exceeds its size limit.".into());
         }
         if self.shortcut.split('+').count() < 2 || self.shortcut.contains("Escape") {
-            return Err("Use a shortcut with a modifier, such as Ctrl+Alt+Space.".into());
+            return Err("Use a shortcut with a modifier, such as Ctrl+Space.".into());
         }
         Ok(())
     }
@@ -86,6 +86,22 @@ impl Settings {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn default_shortcut_uses_two_keys_and_existing_preferences_are_preserved() {
+        assert_eq!(Settings::default().shortcut, "Ctrl+Space");
+        assert!(Settings::default().validate().is_ok());
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("settings.json");
+        let settings = Settings {
+            shortcut: "Ctrl+Shift+Space".into(),
+            microphone: "Headset".into(),
+            ..Settings::default()
+        };
+        settings.save(&path).unwrap();
+        let saved = Settings::read(&path).unwrap();
+        assert_eq!(saved.shortcut, "Ctrl+Shift+Space");
+        assert_eq!(saved.microphone, "Headset");
+    }
     #[test]
     fn atomic_settings_replace_and_validation() {
         let directory = tempfile::tempdir().unwrap();
