@@ -8,7 +8,7 @@
 - Six Rust tests, strict all-target Clippy and formatting passed; 47 Python tests, venv `pip check`, frontend build and npm runtime audit passed. No application dependency was added.
 - Automatic insertion was restored OFF through the real Preferences flow, preserving other preferences. The test app and dev watcher were closed. Do not assume historical PIDs or open test windows are current.
 - Development WebViews rendered and the native engine reached ready after a reload during inspection. The earlier blank initial navigation still has no confirmed root cause; cold-start reliability is not closed.
-- An exact-file worker inventory found missing CTranslate2/tqdm license texts; pinned upstream copies and MPL text are now mapped into installer notices. Full FFmpeg/native corresponding-source and redistribution review remains open. No signing certificate was found in current-user or local-machine stores. No public binary release is justified yet.
+- An exact-file worker inventory found a missing CTranslate2 license text; the matcher was corrected to recognize tqdm's existing British-spelled LICENCE; pinned upstream copies and MPL text are now mapped into installer notices. Full FFmpeg/native corresponding-source and redistribution review remains open. No signing certificate was found in current-user or local-machine stores. No public binary release is justified yet.
 
 Resume pending automated installer/benchmark work from the newest evidence below. Remaining owner-guided gates are inference-time cancellation, recording-in-progress shutdown, physical shortcut-to-target insertion and broader microphone/Hinglish quality. A hosted CI runner does not establish clean consumer-machine or physical hardware acceptance.
 

@@ -19,7 +19,7 @@ Models are not bundled. The desktop permits multilingual tiny/base/small from fa
 
 ## Supplementary license evidence (2026-11-25)
 
-The existing frozen worker inventory contains 13 distribution metadata directories and 137 executable/native/model files. This does not enumerate every dependency. ONNX Runtime's license and third-party notices are present inside its package directory; they must not be inferred missing solely from its dist-info directory. CTranslate2 and tqdm license texts were absent from the checked package, so the installer now includes supplementary upstream texts under `licenses/`:
+The existing frozen worker inventory contains 13 distribution metadata directories and 137 executable/native/model files. This does not enumerate every dependency. ONNX Runtime's license and third-party notices are present inside its package directory; they must not be inferred missing solely from its dist-info directory. The CTranslate2 license text was absent from its checked package. The first inventory incorrectly missed tqdm's existing British-spelled `licenses/LICENCE`; the matcher now recognizes that spelling. The installer includes supplementary pinned upstream texts and a full MPL text under `licenses/`:
 
 - `CTranslate2-4.9.0-LICENSE.txt`: https://github.com/OpenNMT/CTranslate2/blob/v4.9.0/LICENSE, SHA-256 `54aa79d9fe3c09e67a16dcd95b9e88676405a6ec174efda31036983cf7672ecb`.
 - `tqdm-4.70.1-LICENCE.txt`: https://github.com/tqdm/tqdm/blob/v4.70.1/LICENCE, SHA-256 `fcff87c3a47ce8028a8512aa182d4fcf0ad1c90544ee75cf9b343684cac194de`.

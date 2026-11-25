@@ -38,7 +38,7 @@ def inventory(worker):
             {"path": path.relative_to(worker).as_posix(), "sha256": digest(path)}
             for path in sorted({path for root in roots for path in root.rglob("*")})
             if path.is_file() and any(
-                marker in path.name.lower() for marker in ("license", "copying", "notice")
+                marker in path.name.lower() for marker in ("license", "licence", "copying", "notice")
             )
         ]
         packages.append({
