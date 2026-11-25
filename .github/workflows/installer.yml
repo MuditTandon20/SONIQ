@@ -1,0 +1,29 @@
+name: Windows installer smoke
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  installer:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - run: python -m venv .venv
+      - run: .\.venv\Scripts\python.exe -m pip install '.[package]'
+      - run: .\.venv\Scripts\python.exe -m pip check
+      - run: npm ci
+      - run: npm run package
+      - name: Install, check isolated frozen worker and uninstall
+        shell: pwsh
+        run: ./scripts/check-installer.ps1 -InstallerPath 'src-tauri/target/release/bundle/nsis/FlowForge AI_0.2.0_x64-setup.exe'
+      # Keep binary publication separate from this check until redistribution
+      # evidence for the exact native dependencies is complete.
