@@ -1,6 +1,6 @@
 # Engineering standards
 
-The owner paused work on 2026-11-20 and will say “continue” to resume. Resume from the checkpoint in docs/ROADMAP.md; do not restart implementation or redo completed dependency setup. No microphone recording has been activated during development.
+The owner paused work on 2026-11-20 and subsequently said “continue” to resume. Resume from the current continuation status in docs/ROADMAP.md; do not restart implementation or redo completed dependency setup. No microphone recording had been activated at the original pause; subsequent explicit owner-guided microphone checks are recorded in docs/CHALLENGES.md.
 
 The owner has now authorized the remaining milestones together. Deliver the Windows desktop dictation application incrementally, verifying each boundary before expanding it. Preserve the working Python CLI. Do not claim untested hardware, ML quality, or release checks are complete. Optional LLM processing and fine-tuning still require evidence of benefit.
 

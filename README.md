@@ -2,6 +2,8 @@
 
 Local, Windows-first voice dictation with a Tauri desktop interface and a reusable Python speech engine. Audio recognition stays on your device. The CLI remains available for recording, evaluation and experiments.
 
+Source repository: [MuditTandon20/FlowForge-AI](https://github.com/MuditTandon20/FlowForge-AI).
+
 Application code is MIT licensed; dependencies, evaluation audio and model weights retain their own licenses.
 
 ## Desktop (Windows PowerShell)
@@ -16,6 +18,7 @@ npm run desktop
 Development requires Node 22.12+, Rust stable with the MSVC target, Visual Studio C++ Build Tools and Windows WebView2. The installed application bundles Python and its inference libraries; development uses `.venv\Scripts\python.exe`.
 
 1. Wait for the local engine to become ready. If weights are missing, select **Download selected model**; downloading is explicit.
+   Check **Preferences → Microphone** and explicitly select the input you intend to speak into. **Windows default input** may still be the laptop microphone even when a headset is connected.
 2. Click the microphone to start/stop a preview recording, or hold **Ctrl+Alt+Space** while another text field is focused. Release it to transcribe. Preferences can change the shortcut and microphone.
 3. A separate indicator stays visible without taking focus. Each recording is capped at 120 seconds. Cancel using the app/indicator button, or Escape while the main app is focused.
 4. Review the transcript and switch to **Original** to recover the ASR result. **Copy** explicitly writes the selected transcript to the Windows clipboard.
@@ -31,12 +34,18 @@ Settings are validated and atomically replaced under `%APPDATA%\ai.flowforge.des
 
 ## Build an installer
 
+Close the running FlowForge desktop app before packaging, and wait for packaging to finish before launching the release executable.
+
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -e '.[test,package]'
 npm run package
 ```
 
 This packages the speech worker with PyInstaller and creates a per-user NSIS installer under `src-tauri\target\release\bundle\nsis`. Model weights are downloaded separately; they are not embedded or committed. WebView2 installation may require a download if the Windows runtime is missing. Local builds are unsigned, so Windows may show an unknown-publisher warning. This is not a claim of code signing, clean-machine validation or a published GitHub release.
+
+The installed resource directory includes `LICENSE` and `THIRD_PARTY_NOTICES.md` alongside the bundled worker. These notices do not establish a complete redistribution audit; public distribution remains a separate release gate.
+
+The current unsigned installer has passed isolated-directory install/uninstall and native startup, single-instance and idle worker shutdown/crash checks on the development machine. Physical start/stop and indicator visibility were checked with the owner. Recognition still needs review; the limited headset and vocabulary comparisons are recorded in [CHALLENGES](docs/CHALLENGES.md). Clean-machine validation and target-app acceptance remain separate gates.
 
 ```powershell
 npm run build

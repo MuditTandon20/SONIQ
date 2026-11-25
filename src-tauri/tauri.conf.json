@@ -13,6 +13,7 @@
     "windows": [
       {
         "label": "main",
+        "create": false,
         "title": "FlowForge AI",
         "width": 1100,
         "height": 780,
@@ -21,6 +22,7 @@
       },
       {
         "label": "indicator",
+        "create": false,
         "title": "FlowForge recording",
         "url": "index.html?indicator",
         "width": 330,

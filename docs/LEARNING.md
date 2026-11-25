@@ -28,6 +28,8 @@ Rust maintains loading → ready → recording → transcribing → ready, plus 
 
 NDJSON means one JSON object per line. `worker.py` flushes a response per command; diagnostics cannot enter stdout. Cancellation during native inference kills/reloads the worker because the current call is not cooperatively interruptible. That costs model startup but actually stops computation. Windows jobs terminate orphaned children; the named mutex prevents two instances racing on settings and capture cleanup.
 
+Creating a WebView can run frontend code immediately. In `main.rs`, registering `Shared` before constructing either window makes the first `snapshot` command valid without a timing-based retry. Window lifetime also differs from application lifetime: closing the main window leaves the hidden indicator, so its close handler requests full application exit and the exit handler stops the worker. The installed-app checks exposed both boundaries even though unit tests passed.
+
 A focused window and a specific field inside it are different identities. Window-only checks can type into the wrong browser field. `native.rs` compares opaque field runtime IDs and process metadata, rejects passwords and reads no field text. COM initialization belongs to the calling thread. SendInput success means input was queued, not proof that an editor stored it. The focus/input race explains opt-in insertion and the manual-copy path.
 
 ## Lessons from measured chunks

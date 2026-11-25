@@ -41,3 +41,5 @@ Requirement: preview speech before stop without an unbounded queue. Use one in-f
 ## D10 — Packaging and checks
 
 Requirement: install without a separate Python environment and keep verification repeatable. Packaging-only PyInstaller produces an onedir resource, avoiding extraction of the inference runtime on every launch; Tauri NSIS installs per user. Windows GitHub Actions runs local checks once published. Cost: installer size, native DLL/license review, unsigned builds and clean-machine verification. Evidence: frozen worker runs real ASR; installer and remote CI results must be observed separately. No Docker, updater or telemetry is added. Reconsider signing/updates for a public stable release.
+
+The release resource map also installs the application's `LICENSE` and `docs/THIRD_PARTY_NOTICES.md` next to the worker. This uses Tauri's existing resource mechanism and adds no dependency. Bundling notices is separate from completing the exact-build redistribution audit. Keep the application closed throughout packaging to avoid a live executable interfering with bundling.

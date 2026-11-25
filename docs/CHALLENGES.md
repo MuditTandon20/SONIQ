@@ -162,3 +162,97 @@ All normalized WER/CER values were zero, but punctuation changed at shorter boun
 **Verification:** pending. Do not report the existing installer artifact as a successful bundle.
 
 **What I learned:** finish bundling before launching the executable under inspection. Compilation success, artifact existence and successful installer production are different checks.
+
+### C5 resume result (2026-11-20)
+
+The closed-app retry completed successfully (exit 0), producing a 70.29 MiB NSIS installer. It also included the application license and third-party notices through the release resource map. Silent per-user installation into the ignored `artifacts/install-smoke` directory returned 0; the desktop executable, frozen worker and uninstaller existed, and installed license/notice hashes matched the source files. Silent uninstall returned 0 and removed the install directory and uninstall registry entry. These are checks on the development machine, not a clean Windows machine. The earlier exact locked file remains unidentified; a successful closed-app retry supports the sequencing mitigation without proving which process held that file.
+
+## C6 - Initial native snapshot arrived before runtime registration
+
+**Component:** desktop startup and Rust IPC.
+
+**Expected behavior:** the initial snapshot supplies saved preferences and current engine state.
+
+**Actual behavior:** the installed UI showed ``state not managed for field `state` on command `snapshot` ``. The real worker subsequently loaded and the UI received the ready event, but preferences stayed unloaded and the connection error remained visible.
+
+**Verified cause:** configured WebViews can execute their frontend before Tauri's setup callback registers `Shared`. The initial snapshot failed before `app.manage(shared)`; later worker readiness did not retry that snapshot. UI Automation inspected the actual installed app with renderer accessibility enabled, without a remote debugging port.
+
+**Solution implemented:** configure both windows with `create: false`, then construct them from their existing configuration after registering the complete runtime in setup. This preserves the current initial snapshot protocol without retry timing or another dependency.
+
+**Verification:** Rust tests and strict Clippy passed after the change. A native debug build with embedded production frontend assets showed model `base`, an enabled record button and `Ready. Your microphone is off.`, with preferences loaded and no connection error banner. The first direct debug/development-server launches showed a blank WebView despite the dev server returning HTTP 200; their navigation failure remains undiagnosed and is separate from the passing embedded-assets check. Final rebuilt installer recheck remains pending.
+
+## C7 - Hidden indicator kept the application alive after main-window close
+
+**Component:** desktop shutdown and worker lifetime.
+
+**Expected behavior:** closing the main window exits the app and its worker.
+
+**Actual behavior:** a normal `CloseMainWindow()` request succeeded, but the desktop and frozen worker remained alive after five seconds.
+
+**Verified cause:** Tauri only exits automatically after the last window closes; the hidden indicator still existed. The application's worker cleanup ran only on process exit. Force-terminating this test desktop did terminate its supervised frozen worker; that separate crash-path observation did not establish normal-close behavior.
+
+**Solution implemented:** the main window's close-request event explicitly requests application exit, allowing the existing exit handler to terminate the worker. No background-only mode is introduced.
+
+**Verification:** Rust tests and strict Clippy passed after the change. A normal close request on the updated native debug app returned true, the app exited within the five-second observation window, and its source worker was no longer running. Final rebuilt installer recheck remains pending.
+
+## C8 - First owner-guided microphone transcript did not match speech
+
+**Component:** interactive native microphone-to-ASR flow.
+
+**Observed result (2026-11-20):** the owner reported that recording stopped and a transcript appeared, but the transcript did not match what they said. This establishes one user-reported physical start/stop/result flow, not acceptable recognition quality or complete microphone acceptance.
+
+**Local inspection:** the native UI was ready again with Copy enabled and the transcript-ready status; no app-owned capture session directories remained. Active preferences showed base, INT8, automatic language detection, Windows default input and verbatim output. Preferences were inspected without saving changes, and the Dictation page was restored. No audio or transcript was copied into a report or artifact.
+
+**Cause:** not established. The original capture was removed by normal completion, so it cannot be replayed for a same-clip comparison. The owner has been asked for the non-private spoken/displayed comparison and confirmation of indicator visibility. Do not attribute the mismatch to language detection, microphone quality, VAD or model capacity without evidence.
+
+**Next:** use the reported mismatch to choose a controlled follow-up. Record cancellation and shortcut/target-app checks separately. No fine-tuning, LLM rewriting or model download has been justified by this single result.
+
+**Follow-up:** the owner supplied a spoken/displayed comparison showing errors across the sentence, beyond proper-name spelling. The text is not persisted here as transcript history. Read-only device enumeration reported a default Realtek microphone array and a connected Nirvana headset; this alone does not establish which physical source produced the failed capture or why recognition failed. The owner had closed the app. Only the saved language preference was changed from automatic to English using an atomic replacement, and the same embedded-assets native debug app was reopened. UI inspection confirmed English, base, INT8, default input and verbatim, a ready/off microphone and zero capture directories. The owner has been asked to repeat the same non-private sentence from the same speaking position. No new recording was started by the agent, and no recognition improvement is claimed before the result arrives.
+
+**English-only result:** the owner again reported substantial sentence-level errors, and confirmed the recording indicator appeared during capture and disappeared afterward. Explicit English did not resolve the reported mismatch. Native status returned ready/transcript-ready with Copy enabled and zero capture directories after completion.
+
+**Confirmed input configuration mismatch:** Windows WASAPI default-input enumeration reported the Realtek microphone array; CPAL's Windows default-input implementation uses the default capture endpoint. The owner confirmed they intended to use the Nirvana headset. FlowForge's saved input was still Windows default. The test app was closed normally; its frozen worker was no longer present afterward. Only the microphone preference was changed to `Headset (Nirvana Ion ANC)`, preserving English/base/INT8/VAD/verbatim, and the app was reopened. The native Preferences dropdown confirmed the headset selection, and recording remained off. A headset repeat test is pending. This verifies a configuration mismatch, not yet that correcting it fixes recognition. The proposed additional in-memory audio-level/VAD diagnostic was deferred before implementation or activation.
+
+**Headset result:** the owner reported another inaccurate transcript after explicitly selecting the headset. Selecting the intended input has therefore not established a quality fix. No quality metrics are assigned to separate spoken repetitions.
+
+**Next diagnostic prepared:** ignored `artifacts/microphone-diagnostic.py` uses existing sounddevice/NumPy/faster-whisper dependencies. It checks the named headset's WASAPI format and loads cached base/INT8 offline, then requires the owner to type `RECORD` in a visible console. Only afterward does it open a bounded ten-second stream, display `SPEAK NOW`, close the microphone, measure peak/RMS/near-full-scale samples, offer explicit local playback, and transcribe the same in-memory samples in English with VAD on/off. It writes no audio or report files and does not start another recording automatically. Ctrl+C during capture closes the context-managed stream and discards partial blocks. This uses PortAudio rather than the desktop CPAL capture path, so its results must be distinguished from native desktop evidence.
+
+**Preflight:** `--check` passed for `Headset (Nirvana Ion ANC)`, Windows WASAPI, native 16 kHz mono; cached base initialized without a microphone stream. Python suite again passed 47 tests and venv dependency check passed. The visible diagnostic process was launched awaiting explicit owner input; playback, actual diagnostic capture and same-clip VAD results remain pending. No extra dependency or model download was added.
+
+**Owner diagnostic follow-up:** the owner reported completing the diagnostic but said it was still not fully accurate. The diagnostic process was no longer running when checked afterward. No recording or report was retained, so the agent cannot recover its console results or replay that capture. The owner has been asked for the actual diagnostic text and whether local playback was clear; if the text is unavailable, whether errors affected only names or also ordinary words. Signal measurements, VAD comparison, playback clarity and the exact remaining error pattern are not yet established. No further setting/model change is justified by the percentage description alone.
+
+**Direct-result diagnostic:** after the owner said they had forgotten the output, a standard-library Tk window was added to the ignored diagnostic script. It opens capture only on an explicit Record button, displays SPEAK NOW after the stream opens, supports cancellation/close, and returns results through its parent process stdout instead of saving files. The first ten-second ordinary-sentence capture returned text matching the displayed sentence with VAD on and off. Peak was 0.54395, RMS -24.04 dBFS and near-full-scale fraction 0%. These are observed scalar measurements on one clip, not a broad accuracy or hardware certification. Playback clarity was not reported. This first diagnostic imported an older installed source copy, identified in C9; the unhinted recognition settings were base/INT8/English/beam 5.
+
+**Current-source name comparison:** after correcting the diagnostic import, another explicit ten-second headset capture compared VAD on/off without hints and VAD on with `Mudit, FlowForge AI` hints, using one reused base/INT8 model and identical samples. Both unhinted passes misrecognized the personal name. The hinted pass recognized the intended personal and product names, while inflection/article differences remained. Peak was 0.60550, RMS -21.04 dBFS and near-full-scale fraction 0%. Disabling VAD did not correct the name. These observations support trying the two vocabulary terms for this owner; they do not establish a general correction benefit. Only those local terminology preferences were added, preserving English and the explicit headset. No LLM, new model, download or transcript history was added. Both diagnostic windows were closed and their in-memory capture discarded.
+
+**Native release follow-up:** the final rebuilt release app is open with headset/English/base/INT8/verbatim and saved terminology. The owner is asked to record an ordinary sentence plus the name-containing sentence after the timer starts counting, stop and leave the current result visible for transient UI inspection. That native result and any capture-start timing diagnosis remain pending.
+
+**Native release result:** after the owner reported completion, transient UI inspection showed both intended names and the remainder of the requested sentence recognized correctly, with the leading word absent. There is no retained audio or independently checked reference to establish why that word was absent. The app returned to ready/transcript-ready, Copy was enabled and capture session count was zero. Do not infer broad quality or a capture-start root cause from this single result. A separate owner-guided cancellation check has been requested.
+
+## C9 - Diagnostic imported an older installed project copy
+
+**Observed failure:** the first name-hint diagnostic failed with `Transcriber.transcribe_samples() got an unexpected keyword argument 'hotwords'` before returning its ASR comparison.
+
+**Verified cause:** executing the script from `artifacts/` put that directory first on Python's search path. The venv contained a non-editable older `flowforge` package without the hotwords parameter, while imports from the repository root resolved current source. Inspection confirmed the differing signatures. The frozen worker's existing PyInstaller analysis entries pointed to the current checkout for worker/asr/audio/text, so this evidence does not show that the desktop worker used the older installed copy.
+
+**Resolution:** the ignored diagnostic explicitly puts its own checkout root first on the module search path and reports its ASR source before enabling recording. Its preflight and successful name-hint run resolved `flowforge/asr.py` in this checkout. An attempted offline, no-dependency editable relink failed during metadata preparation with `invalid command 'bdist_wheel'`; no package uninstall/install occurred. No dependency setup was repeated to address this diagnostic-only import issue.
+
+## Final local release smoke checks (2026-11-20)
+
+The rebuilt installer containing the startup/shutdown fixes completed bundling with exit 0 (70.29 MiB). SHA-256: `7D96533F3C569269E3679070F315FED017F6C9146757AA105A15DAB361853933`.
+
+- Silent per-user installation into ignored `artifacts/install-smoke` passed. Executable, bundled frozen worker and uninstaller existed; installed license/notice hashes matched the source.
+- Native UI inspection of that installed app observed ready/microphone-off state, enabled recording and no initial connection error.
+- A second instance exited successfully, leaving one desktop process.
+- Closing the main window exited the app and its frozen worker within the five-second check window.
+- Force-terminating a separate idle installed desktop also stopped its frozen worker within the five-second check window. No microphone was activated in these automated lifecycle checks.
+- Silent uninstall returned 0 and removed the test install directory and uninstall registry entry. Owner preferences retained the same hash.
+- Final checks: 47 Python tests, venv `pip check`, four Rust tests, strict Clippy, Rust formatting and TypeScript/Vite production build passed.
+
+The local scripts are ignored under artifacts. These results verify this development-machine installation and idle lifecycle, not clean-machine installation, capture-in-progress shutdown, signing, complete redistribution compliance, remote CI, application-field insertion or public release. The release executable was reopened only after bundling and uninstall checks finished, for the explicitly guided native speech test.
+
+## Interactive cancellation and insertion acceptance (2026-11-20)
+
+The owner performed the requested native Record/speak/Cancel check. Transient inspection confirmed the cancelled status, microphone off, enabled Start, disabled Copy, empty transcript preview and zero capture session directories. This verifies this observed cancellation path; cancellation during active model inference and recording-in-progress application shutdown remain separate checks.
+
+For target-app checks, automatic insertion was temporarily enabled through the actual Preferences checkbox and Save command, preserving the owner's other preferences. A dedicated, initially empty `artifacts/FlowForge-insertion-check.txt` was opened in Notepad; no existing user document was overwritten. The owner has been asked to use hold-to-talk in that document and keep it focused through transcription. Result pending. Restore automatic insertion to off after the interactive checks, using the actual Preferences flow. No microphone was started by the agent.

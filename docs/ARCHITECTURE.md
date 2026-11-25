@@ -17,6 +17,8 @@ The CLI remains independent. Desktop additions are described below; there is sti
 
 React/TypeScript renders preferences and transcript/status inside Tauri's system WebView2. Rust owns shortcuts, CPAL capture, native insertion, clipboard, settings and worker supervision. Python owns faster-whisper, optional Silero VAD and conservative text cleanup. One worker exchanges newline-delimited JSON over stdin/stdout; stderr carries diagnostics. A Windows kill-on-close job prevents orphaned worker processes after a crash.
 
+Window configuration disables automatic creation. Setup registers the complete runtime before creating the main and indicator WebViews, so their first IPC snapshot can read preferences. A main-window close request explicitly exits the application; otherwise the hidden indicator would keep the event loop and worker alive.
+
 1. A button or key press begins an explicit session. Shortcut recording snapshots supported focused-field metadata, never its text.
 2. A dedicated CPAL thread downmixes native-rate audio to mono int16 in a preallocated buffer capped at 120 seconds. The non-focusing indicator stays visible. Inference and disk writes happen outside the audio callback.
 3. Stop/release closes capture and writes a temporary WAV. Python uses PyAV to resample it to mono float32 16 kHz, reuses the loaded model and returns original/cleaned text plus timing.

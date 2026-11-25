@@ -491,6 +491,14 @@ fn main() {
     };
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .on_window_event(|window, event| {
+            if window.label() == "main"
+                && matches!(event, tauri::WindowEvent::CloseRequested { .. })
+            {
+                // The hidden indicator must not keep the worker and shortcuts alive.
+                window.app_handle().exit(0);
+            }
+        })
         .setup(|app| {
             // The named mutex prevents deleting another live instance's audio.
             let root = app.path().app_local_data_dir()?.join("captures");
@@ -527,6 +535,11 @@ fn main() {
                 worker_generation: 0,
             }));
             app.manage(shared);
+            // Configured WebViews can execute IPC while they are being created.
+            // Register the complete runtime first so their initial snapshot is valid.
+            for config in &app.config().app.windows {
+                tauri::WebviewWindowBuilder::from_config(app.handle(), config)?.build()?;
+            }
             let handle = app.handle().clone();
             let shortcut_error = register_shortcut(&handle, &settings.shortcut).err();
             if let Some(error) = error.or(shortcut_error) {
