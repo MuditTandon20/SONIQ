@@ -17,7 +17,7 @@ def main(argv=None) -> int:
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
-    parser = argparse.ArgumentParser(description="FlowForge AI - local speech recognition")
+    parser = argparse.ArgumentParser(description="SONIQ - local speech recognition")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("devices", help="List microphones without recording")
     capture = commands.add_parser("record", help="Explicit timed microphone capture")

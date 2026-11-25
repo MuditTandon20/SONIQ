@@ -3,8 +3,8 @@ import json
 
 import pytest
 
-from flowforge import worker
-from flowforge.text import clean_text
+from soniq import worker
+from soniq.text import clean_text
 
 
 def test_worker_reuses_model_and_recovers_after_bad_commands(monkeypatch):

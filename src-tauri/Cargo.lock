@@ -952,21 +952,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "flowforge-ai"
-version = "0.2.0"
-dependencies = [
- "cpal",
- "hound",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-global-shortcut",
- "tempfile",
- "windows 0.61.3",
-]
-
-[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3172,6 +3157,21 @@ dependencies = [
  "wasm-bindgen",
  "web-sys",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "soniq"
+version = "0.2.0"
+dependencies = [
+ "cpal",
+ "hound",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-global-shortcut",
+ "tempfile",
+ "windows 0.61.3",
 ]
 
 [[package]]

@@ -3,10 +3,10 @@ param([Parameter(Mandatory=$true)][string]$InstallerPath)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $installer = (Resolve-Path -LiteralPath $InstallerPath).Path
-$registryPath = 'HKCU:/Software/Microsoft/Windows/CurrentVersion/Uninstall/FlowForge AI'
+$registryPath = 'HKCU:/Software/Microsoft/Windows/CurrentVersion/Uninstall/SONIQ'
 if (Test-Path -LiteralPath $registryPath) { throw 'Preserve the existing installation; uninstall it separately before this isolated check.' }
-if (Get-Process flowforge-ai,flowforge-worker -ErrorAction SilentlyContinue) { throw 'Close FlowForge before this check.' }
-$testRoot = Join-Path $env:TEMP ('FlowForge-installer-' + [Guid]::NewGuid().ToString('N'))
+if (Get-Process soniq,soniq-worker -ErrorAction SilentlyContinue) { throw 'Close SONIQ before this check.' }
+$testRoot = Join-Path $env:TEMP ('SONIQ-installer-' + [Guid]::NewGuid().ToString('N'))
 $installRoot = Join-Path $testRoot 'installed'
 New-Item -ItemType Directory -Path $testRoot | Out-Null
 $worker = $null
@@ -16,7 +16,7 @@ try {
     if (-not $process.WaitForExit(60000)) { throw 'Installer timed out.' }
     if ($process.ExitCode -ne 0) { throw "Installer exit code $($process.ExitCode)." }
     $installed = $true
-    foreach ($relative in @('flowforge-ai.exe','worker/flowforge-worker.exe','LICENSE','THIRD_PARTY_NOTICES.md','licenses/CTranslate2-4.9.0-LICENSE.txt','licenses/tqdm-4.70.1-LICENCE.txt','licenses/MPL-2.0.txt','uninstall.exe')) {
+    foreach ($relative in @('soniq.exe','worker/soniq-worker.exe','LICENSE','THIRD_PARTY_NOTICES.md','licenses/CTranslate2-4.9.0-LICENSE.txt','licenses/tqdm-4.70.1-LICENCE.txt','licenses/MPL-2.0.txt','uninstall.exe')) {
         if (-not (Test-Path -LiteralPath (Join-Path $installRoot $relative) -PathType Leaf)) { throw "Missing resource $relative." }
     }
     foreach ($source in Get-ChildItem -LiteralPath (Join-Path $projectRoot 'docs/licenses') -File) {
@@ -28,7 +28,7 @@ try {
     }
     Write-Output 'Installed executable, worker and notice hashes verified.'
     $info = New-Object System.Diagnostics.ProcessStartInfo
-    $info.FileName = Join-Path $installRoot 'worker/flowforge-worker.exe'
+    $info.FileName = Join-Path $installRoot 'worker/soniq-worker.exe'
     $info.WorkingDirectory = $testRoot
     $info.UseShellExecute = $false
     $info.CreateNoWindow = $true

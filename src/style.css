@@ -103,12 +103,6 @@ button:active:not(:disabled) {
   color: #213a29;
   border-radius: 10px;
 }
-.brand-ai {
-  font-weight: 400;
-  color: #bad39c;
-  font-size: 15px;
-  letter-spacing: 0;
-}
 .workspace-label {
   font-size: 9px;
   letter-spacing: 1.6px;

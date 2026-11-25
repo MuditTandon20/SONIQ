@@ -7,8 +7,8 @@ import jiwer
 import numpy as np
 import pytest
 
-from flowforge import audio, asr, evaluation
-from flowforge.cli import main
+from soniq import audio, asr, evaluation
+from soniq.cli import main
 
 
 def wav(path, rate=16000, channels=1, seconds=0.25, silent=False):
@@ -183,7 +183,7 @@ def test_cli_missing_audio(capsys):
 
 
 def test_cli_missing_mic(monkeypatch, capsys):
-    monkeypatch.setattr("flowforge.cli.microphones", lambda: [])
+    monkeypatch.setattr("soniq.cli.microphones", lambda: [])
     assert main(["devices"]) == 1
     assert "No microphone" in capsys.readouterr().err
 

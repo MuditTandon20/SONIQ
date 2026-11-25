@@ -19,7 +19,7 @@ pub struct Worker {
 impl Worker {
     pub fn start(app: AppHandle, generation: u64) -> Result<Self, String> {
         let resources = app.path().resource_dir().map_err(|e| e.to_string())?;
-        let bundled = resources.join("worker").join("flowforge-worker.exe");
+        let bundled = resources.join("worker").join("soniq-worker.exe");
         let mut command;
         if bundled.is_file() {
             command = Command::new(bundled);
@@ -33,10 +33,10 @@ impl Worker {
             }
             command = Command::new(python);
             command
-                .args(["-u", "-m", "flowforge.worker"])
+                .args(["-u", "-m", "soniq.worker"])
                 .current_dir(project);
         } else {
-            return Err("Bundled speech engine is missing. Reinstall FlowForge AI.".into());
+            return Err("Bundled speech engine is missing. Reinstall SONIQ.".into());
         }
         command
             .creation_flags(0x08000000)

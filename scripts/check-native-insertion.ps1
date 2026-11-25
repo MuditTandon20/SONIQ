@@ -37,7 +37,7 @@ public static class InsertionTestWindow {
 $runDirectory = Join-Path $projectRoot ('artifacts/insertion-' + [Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $runDirectory -Force | Out-Null
 $html = Join-Path $runDirectory 'fields.html'
-$fixtureTitle = 'FlowForge insertion ' + [System.IO.Path]::GetFileName($runDirectory)
+$fixtureTitle = 'SONIQ insertion ' + [System.IO.Path]::GetFileName($runDirectory)
 @"
 <!doctype html><html lang="en"><meta charset="utf-8">
 <title>$fixtureTitle</title>
@@ -113,7 +113,7 @@ try {
     $insert = Probe 'insert'
     if (-not $insert.ok) { throw ('Browser insertion failed: ' + $insert.error) }
     Start-Sleep -Milliseconds 200
-    if ((Field-Text $first) -cne 'FlowForge acceptance 123.') { throw 'Browser did not receive the complete fixed test text.' }
+    if ((Field-Text $first) -cne 'SONIQ acceptance 123.') { throw 'Browser did not receive the complete fixed test text.' }
     Reset-First
     $unicodeResult = Probe 'unicode'
     if (-not $unicodeResult.ok) { throw ('Browser Unicode insertion failed: ' + $unicodeResult.error) }
@@ -128,11 +128,11 @@ try {
     Reset-First
     $longBrowserResult = Probe 'long'
     Start-Sleep -Milliseconds 300
-    if (-not $longBrowserResult.ok -or (Field-Text $first) -cne ('FlowForge acceptance 123. ' * 30)) { throw ('Browser long-text insertion failed: ' + $longBrowserResult.error) }
+    if (-not $longBrowserResult.ok -or (Field-Text $first) -cne ('SONIQ acceptance 123. ' * 30)) { throw ('Browser long-text insertion failed: ' + $longBrowserResult.error) }
     Reset-First
     $boundaryResult = Probe 'boundary'
     Start-Sleep -Milliseconds 300
-    if (-not $boundaryResult.ok -or (Field-Text $first) -cne (('FlowForge acceptance 123. ' * 5) + 'End')) { throw 'Browser boundary insertion failed.' }
+    if (-not $boundaryResult.ok -or (Field-Text $first) -cne (('SONIQ acceptance 123. ' * 5) + 'End')) { throw 'Browser boundary insertion failed.' }
     Reset-First
     Focus-Control $browser $first
     if (-not (Probe 'capture').ok) { throw 'Cannot capture first browser target for focus-change check.' }
@@ -147,7 +147,7 @@ try {
     Focus-Control $browser $first
     if (-not (Probe 'capture').ok) { throw 'Cannot capture browser for cross-window check.' }
     # Use a uniquely named, newly created file; never read an existing document.
-    $notePath = Join-Path $runDirectory ('FlowForge-acceptance-' + [Guid]::NewGuid().ToString('N') + '.txt')
+    $notePath = Join-Path $runDirectory ('SONIQ-acceptance-' + [Guid]::NewGuid().ToString('N') + '.txt')
     [System.IO.File]::WriteAllText($notePath, '')
     # This interactive target must be visible for UI Automation and real focus.
     Start-Process notepad.exe -ArgumentList ('"' + $notePath + '"') | Out-Null
@@ -170,7 +170,7 @@ try {
     $insert = Probe 'insert'
     if (-not $insert.ok) { throw ('Notepad insertion failed: ' + $insert.error) }
     Start-Sleep -Milliseconds 200
-    if ((Field-Text $document) -cne 'FlowForge acceptance 123.') { throw 'Notepad did not receive the complete fixed test text.' }
+    if ((Field-Text $document) -cne 'SONIQ acceptance 123.') { throw 'Notepad did not receive the complete fixed test text.' }
     [System.Windows.Forms.SendKeys]::SendWait('^a{BACKSPACE}')
     Focus-Control $notepadRoot $document
     if (-not (Probe 'capture').ok) { throw 'Cannot recapture Notepad for Unicode test.' }
@@ -183,15 +183,15 @@ try {
     $longResult = Probe 'long'
     Start-Sleep -Milliseconds 300
     $longActual = Field-Text $document
-    if (-not $longResult.ok -or $longActual -cne ('FlowForge acceptance 123. ' * 30)) {
-        throw ('Notepad long-text insertion failed: ' + $longResult.error + '; received length=' + $longActual.Length + '; expected=780')
+    if (-not $longResult.ok -or $longActual -cne ('SONIQ acceptance 123. ' * 30)) {
+        throw ('Notepad long-text insertion failed: ' + $longResult.error + '; received length=' + $longActual.Length + '; expected=660')
     }
     [System.Windows.Forms.SendKeys]::SendWait('^a{BACKSPACE}')
     Focus-Control $notepadRoot $document
     if (-not (Probe 'capture').ok) { throw 'Cannot capture Notepad for cancellation test.' }
     $cancelled = Probe 'cancel_after_first'
     Start-Sleep -Milliseconds 200
-    if ($cancelled.ok -or (Field-Text $document) -cne 'F' -or $cancelled.error -notlike '*partially inserted*') { throw 'Cancellation did not stop native insertion after its first character.' }
+    if ($cancelled.ok -or (Field-Text $document) -cne 'S' -or $cancelled.error -notlike '*partially inserted*') { throw 'Cancellation did not stop native insertion after its first character.' }
     [System.Windows.Forms.SendKeys]::SendWait('^a{BACKSPACE}')
     Focus-Control $notepadRoot $document
     if (-not (Probe 'capture').ok) { throw 'Cannot capture Notepad for interrupted insertion.' }
@@ -207,7 +207,7 @@ try {
     [System.Windows.Forms.SendKeys]::SendWait('^s')
     Start-Sleep -Milliseconds 200
     [System.Windows.Forms.SendKeys]::SendWait('^w')
-    [PSCustomObject]@{BrowserInsertion=$true;BrowserLongText=$true;Browser133Characters=$true;UnicodeInsertion=$true;SameWindowFocusChangeRefused=$true;MidInsertionFocusChangeRefused=$true;InsertionCancellation=$true;PasswordRefused=$true;ReadOnlyRefused=$true;NotepadInsertion=$true;NotepadLongText=$true;MicrophoneActivated=$false;TestDirectory=$runDirectory} | ConvertTo-Json -Compress
+    [PSCustomObject]@{BrowserInsertion=$true;BrowserLongText=$true;BrowserBoundaryText=$true;UnicodeInsertion=$true;SameWindowFocusChangeRefused=$true;MidInsertionFocusChangeRefused=$true;InsertionCancellation=$true;PasswordRefused=$true;ReadOnlyRefused=$true;NotepadInsertion=$true;NotepadLongText=$true;MicrophoneActivated=$false;TestDirectory=$runDirectory} | ConvertTo-Json -Compress
 } finally {
     if ($probe -and -not $probe.HasExited) { $probe.StandardInput.WriteLine('quit'); if (-not $probe.WaitForExit(3000)) { $probe.Kill() } }
     # Only the isolated browser profile opened above belongs to this check.

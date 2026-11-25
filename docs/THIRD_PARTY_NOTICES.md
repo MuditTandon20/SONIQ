@@ -1,6 +1,6 @@
 # Third-party components and redistribution
 
-FlowForge application source is MIT licensed. That does not relicense bundled third-party code, native libraries or model weights. Runtime package metadata and available license files are retained in the packaged worker's `_internal/*dist-info` directories.
+SONIQ application source is MIT licensed. That does not relicense bundled third-party code, native libraries or model weights. Runtime package metadata and available license files are retained in the packaged worker's `_internal/*dist-info` directories.
 
 Principal components: faster-whisper and CTranslate2 (MIT), NumPy (BSD), PyAV (BSD source), ONNX Runtime (MIT), Hugging Face Hub/tokenizers (Apache-2.0), Python (PSF), Tauri/React and their transitive dependencies. Refer to the actual versions and provided upstream license texts; this list is not a complete dependency-license audit.
 
@@ -27,4 +27,4 @@ The existing frozen worker inventory contains 13 distribution metadata directori
 
 These versioned texts cover identified gaps in this build's notices. Refresh the inventory and verify applicability when changing dependencies. Exact FFmpeg corresponding source/build settings and remaining native/transitive obligations still require review before binary publication. See https://ffmpeg.org/legal.html. No audit completion is claimed.
 
-Run `python scripts/inventory-worker.py --worker src-tauri/resources/flowforge-worker --output reports/worker-inventory.json` to create a new, non-overwriting local report. Reports are ignored by Git.
+Run `python scripts/inventory-worker.py --worker src-tauri/resources/soniq-worker --output reports/worker-inventory.json` to create a new, non-overwriting local report. Reports are ignored by Git.

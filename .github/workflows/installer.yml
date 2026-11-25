@@ -24,6 +24,6 @@ jobs:
       - run: npm run package
       - name: Install, check isolated frozen worker and uninstall
         shell: pwsh
-        run: ./scripts/check-installer.ps1 -InstallerPath 'src-tauri/target/release/bundle/nsis/FlowForge AI_0.2.0_x64-setup.exe'
+        run: ./scripts/check-installer.ps1 -InstallerPath 'src-tauri/target/release/bundle/nsis/SONIQ_0.2.0_x64-setup.exe'
       # Keep binary publication separate from this check until redistribution
       # evidence for the exact native dependencies is complete.

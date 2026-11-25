@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from flowforge import experiments
+from soniq import experiments
 
 
 def test_chunk_boundaries_include_final_short_chunk(monkeypatch):

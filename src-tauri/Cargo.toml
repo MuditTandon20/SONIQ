@@ -1,5 +1,5 @@
 [package]
-name = "flowforge-ai"
+name = "soniq"
 version = "0.2.0"
 description = "Private, local Windows dictation"
 edition = "2021"

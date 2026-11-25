@@ -1,7 +1,7 @@
 {
   "bundle": {
     "resources": {
-      "resources/flowforge-worker/": "worker/",
+      "resources/soniq-worker/": "worker/",
       "../LICENSE": "LICENSE",
       "../docs/THIRD_PARTY_NOTICES.md": "THIRD_PARTY_NOTICES.md",
       "../docs/licenses/": "licenses/"

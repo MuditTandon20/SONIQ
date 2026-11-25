@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "FlowForge AI",
+  "productName": "SONIQ",
   "version": "0.2.0",
-  "identifier": "ai.flowforge.desktop",
+  "identifier": "ai.soniq.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
@@ -14,7 +14,7 @@
       {
         "label": "main",
         "create": false,
-        "title": "FlowForge AI",
+        "title": "SONIQ",
         "width": 1100,
         "height": 780,
         "minWidth": 760,
@@ -23,7 +23,7 @@
       {
         "label": "indicator",
         "create": false,
-        "title": "FlowForge recording",
+        "title": "SONIQ recording",
         "url": "index.html?indicator",
         "width": 330,
         "height": 76,

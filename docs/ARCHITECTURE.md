@@ -1,6 +1,6 @@
 # Architecture
 
-`python -m flowforge` calls `cli.main`. Four small modules own current responsibilities:
+`python -m soniq` calls `cli.main`. Four small modules own current responsibilities:
 
 - `audio.py`: enumerate microphone inputs, capture native-rate mono int16 WAV, decode files to float32 mono 16 kHz.
 - `asr.py`: initialize one CPU Whisper model, transcribe multiple files, consume lazy segments before stopping the inference timer.

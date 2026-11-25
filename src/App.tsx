@@ -45,7 +45,7 @@ function useEngine() {
   useEffect(() => {
     if (!isTauri()) {
       setError(
-        "Open FlowForge in its Windows desktop app to use the microphone and local speech engine.",
+        "Open SONIQ in its Windows desktop app to use the microphone and local speech engine.",
       );
       return;
     }
@@ -225,7 +225,7 @@ export function App() {
             <Mic size={21} />
           </span>
           <span>
-            flowforge<span className="brand-ai"> AI</span>
+            SONIQ
           </span>
         </a>
         <div className="workspace-label">YOUR WORKSPACE</div>

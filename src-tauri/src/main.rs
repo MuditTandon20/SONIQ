@@ -577,7 +577,7 @@ fn main() {
             copy_text
         ])
         .build(tauri::generate_context!())
-        .expect("Could not initialize FlowForge AI")
+        .expect("Could not initialize SONIQ")
         .run(|app, event| {
             if matches!(event, tauri::RunEvent::Exit) {
                 let shared = app.state::<Shared>();

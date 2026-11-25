@@ -18,9 +18,9 @@ fn main() {
             "insert" | "unicode" | "long" | "boundary" | "cancel_after_first" => {
                 let text = match command.trim() {
                     "unicode" => "नमस्ते café 😀.".to_string(),
-                    "long" => "FlowForge acceptance 123. ".repeat(30),
-                    "boundary" => "FlowForge acceptance 123. ".repeat(5) + "End",
-                    _ => "FlowForge acceptance 123.".to_string(),
+                    "long" => "SONIQ acceptance 123. ".repeat(30),
+                    "boundary" => "SONIQ acceptance 123. ".repeat(5) + "End",
+                    _ => "SONIQ acceptance 123.".to_string(),
                 };
                 let checks = std::cell::Cell::new(0);
                 target

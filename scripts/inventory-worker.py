@@ -19,10 +19,10 @@ def digest(path):
 
 
 def inventory(worker):
-    executable = worker / "flowforge-worker.exe"
+    executable = worker / "soniq-worker.exe"
     internal = worker / "_internal"
     if not executable.is_file() or not internal.is_dir():
-        raise ValueError("Expected an existing onedir flowforge-worker package.")
+        raise ValueError("Expected an existing onedir soniq-worker package.")
     packages = []
     for metadata in sorted(internal.glob("*.dist-info/METADATA")):
         message = Parser().parsestr(metadata.read_text(encoding="utf-8"))

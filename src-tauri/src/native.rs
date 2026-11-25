@@ -12,12 +12,12 @@ use std::os::windows::io::{FromRawHandle, OwnedHandle};
 
 pub fn single_instance() -> Result<Option<OwnedHandle>, String> {
     unsafe {
-        let handle = CreateMutexW(None, false, windows::core::w!("Local\\FlowForgeAI.Desktop"))
+        let handle = CreateMutexW(None, false, windows::core::w!("Local\\SONIQ.Desktop"))
             .map_err(|e| e.to_string())?;
         let existed = GetLastError() == ERROR_ALREADY_EXISTS;
         let owned = OwnedHandle::from_raw_handle(handle.0);
         if existed {
-            if let Ok(window) = FindWindowW(None, windows::core::w!("FlowForge AI")) {
+            if let Ok(window) = FindWindowW(None, windows::core::w!("SONIQ")) {
                 let _ = ShowWindow(window, SW_RESTORE);
                 let _ = SetForegroundWindow(window);
             }
@@ -59,7 +59,7 @@ pub fn focused_target() -> Result<Target, String> {
         let mut process = 0;
         GetWindowThreadProcessId(GetForegroundWindow(), Some(&mut process));
         if process == std::process::id() {
-            return Err("FlowForge is focused; use transcript preview.".into());
+            return Err("SONIQ is focused; use transcript preview.".into());
         }
     }
     std::thread::spawn(|| {
@@ -105,7 +105,7 @@ unsafe fn focused() -> Result<Target, String> {
     }
     let process = inspect(element.CurrentProcessId(), "field process")?;
     if process == std::process::id() as i32 {
-        return Err("FlowForge is focused; use transcript preview.".into());
+        return Err("SONIQ is focused; use transcript preview.".into());
     }
     let rich_edit = if inspect(element.CurrentClassName(), "control class")? == "RichEditD2DPT" {
         let handle = inspect(element.CurrentNativeWindowHandle(), "editor window")?;
