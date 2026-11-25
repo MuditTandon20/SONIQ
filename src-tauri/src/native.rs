@@ -32,6 +32,7 @@ pub struct Target {
     window: isize,
     process: i32,
     runtime_id: Vec<i32>,
+    rich_edit: Option<isize>,
 }
 
 struct Com;
@@ -69,36 +70,58 @@ pub fn focused_target() -> Result<Target, String> {
     .map_err(|_| "Focused-field check failed".to_string())?
 }
 
-unsafe fn focused() -> WinResult<Target> {
+unsafe fn focused() -> Result<Target, String> {
+    fn inspect<T>(result: WinResult<T>, property: &str) -> Result<T, String> {
+        result.map_err(|error| format!("Cannot verify {property}: {error}"))
+    }
     let window = GetForegroundWindow();
-    let automation: IUIAutomation = CoCreateInstance(&CUIAutomation, None, CLSCTX_INPROC_SERVER)?;
-    let element = automation.GetFocusedElement()?;
-    if element.CurrentIsPassword()?.as_bool()
-        || !element.CurrentIsEnabled()?.as_bool()
-        || !element.CurrentHasKeyboardFocus()?.as_bool()
-        || ![UIA_EditControlTypeId, UIA_DocumentControlTypeId]
-            .contains(&element.CurrentControlType()?)
+    let automation: IUIAutomation = inspect(
+        CoCreateInstance(&CUIAutomation, None, CLSCTX_INPROC_SERVER),
+        "UI Automation",
+    )?;
+    let element = inspect(automation.GetFocusedElement(), "focused element")?;
+    let refusal = if inspect(element.CurrentIsPassword(), "password status")?.as_bool() {
+        Some("Password fields require manual handling.")
+    } else if !inspect(element.CurrentIsEnabled(), "enabled status")?.as_bool() {
+        Some("The focused field is disabled.")
+    } else if !inspect(element.CurrentHasKeyboardFocus(), "keyboard focus")?.as_bool() {
+        Some("The field no longer has keyboard focus.")
+    } else if ![UIA_EditControlTypeId, UIA_DocumentControlTypeId]
+        .contains(&inspect(element.CurrentControlType(), "control type")?)
     {
-        return Err(windows::core::Error::from_hresult(windows::core::HRESULT(
-            0x80070005u32 as i32,
-        )));
+        Some("The focused control is not a supported text field.")
+    } else {
+        None
+    };
+    if let Some(reason) = refusal {
+        return Err(reason.into());
     }
     if let Ok(pattern) =
         element.GetCurrentPatternAs::<IUIAutomationValuePattern>(UIA_ValuePatternId)
     {
-        if pattern.CurrentIsReadOnly()?.as_bool() {
-            return Err(windows::core::Error::from_hresult(windows::core::HRESULT(
-                0x80070005u32 as i32,
-            )));
+        if inspect(pattern.CurrentIsReadOnly(), "read-only status")?.as_bool() {
+            return Err("The focused field is read-only.".into());
         }
     }
-    let process = element.CurrentProcessId()?;
+    let process = inspect(element.CurrentProcessId(), "field process")?;
     if process == std::process::id() as i32 {
-        return Err(windows::core::Error::from_hresult(windows::core::HRESULT(
-            0x80070005u32 as i32,
-        )));
+        return Err("FlowForge is focused; use transcript preview.".into());
     }
-    let array = element.GetRuntimeId()?;
+    let rich_edit = if inspect(element.CurrentClassName(), "control class")? == "RichEditD2DPT" {
+        let handle = inspect(element.CurrentNativeWindowHandle(), "editor window")?;
+        let mut native_process = 0;
+        GetWindowThreadProcessId(handle, Some(&mut native_process));
+        if handle.0.is_null()
+            || !IsWindowUnicode(handle).as_bool()
+            || native_process != process as u32
+        {
+            return Err("Cannot verify the Unicode editor window.".into());
+        }
+        Some(handle.0 as isize)
+    } else {
+        None
+    };
+    let array = inspect(element.GetRuntimeId(), "field identity")?;
     let result = (|| -> WinResult<Vec<i32>> {
         let lower = SafeArrayGetLBound(array, 1)?;
         let upper = SafeArrayGetUBound(array, 1)?;
@@ -115,16 +138,17 @@ unsafe fn focused() -> WinResult<Target> {
     })();
     let _ = SafeArrayDestroy(array);
     if GetForegroundWindow() != window {
-        return Err(windows::core::Error::from_win32());
+        return Err("Focus changed while checking the field.".into());
     }
     Ok(Target {
         window: window.0 as isize,
         process,
-        runtime_id: result?,
+        runtime_id: inspect(result, "field identity values")?,
+        rich_edit,
     })
 }
 
-pub fn insert(target: &Target, text: &str) -> Result<(), String> {
+pub fn insert(target: &Target, text: &str, is_current: impl Fn() -> bool) -> Result<(), String> {
     if text.chars().any(char::is_control) {
         return Err("Use manual copy for multiline text or control characters.".into());
     }
@@ -132,38 +156,102 @@ pub fn insert(target: &Target, text: &str) -> Result<(), String> {
         return Err("Transcript is too long for automatic insertion.".into());
     }
     let _com = Com::initialize()?;
-    unsafe {
-        // Never release the user's physical modifiers or steal focus.
-        for key in [VK_CONTROL, VK_MENU, VK_SHIFT, VK_LWIN, VK_RWIN] {
-            if GetAsyncKeyState(key.0 as i32) < 0 {
-                return Err("Release modifier keys, then copy the transcript manually.".into());
+    let verify = || -> Result<(), String> {
+        if !is_current() {
+            return Err("Insertion cancelled.".into());
+        }
+        unsafe {
+            for key in [VK_CONTROL, VK_MENU, VK_SHIFT, VK_LWIN, VK_RWIN] {
+                if GetAsyncKeyState(key.0 as i32) < 0 {
+                    return Err("Release modifier keys, then copy the transcript manually.".into());
+                }
+            }
+            if &focused()? != target {
+                return Err("Focus changed since recording started.".into());
             }
         }
-        if &focused().map_err(|e| e.to_string())? != target {
-            return Err("Focus changed since recording started.".into());
+        if !is_current() {
+            return Err("Insertion cancelled.".into());
         }
+        Ok(())
+    };
+    verify()?;
+    if target.rich_edit.is_none() {
         let mut inputs = Vec::new();
-        for unit in text.encode_utf16() {
-            for flags in [KEYEVENTF_UNICODE, KEYEVENTF_UNICODE | KEYEVENTF_KEYUP] {
-                inputs.push(INPUT {
-                    r#type: INPUT_KEYBOARD,
-                    Anonymous: INPUT_0 {
-                        ki: KEYBDINPUT {
-                            wVk: VIRTUAL_KEY(0),
-                            wScan: unit,
-                            dwFlags: flags,
-                            time: 0,
-                            dwExtraInfo: 0,
-                        },
-                    },
+        let mut sent_any = false;
+        for character in text.chars() {
+            if let Err(error) = verify() {
+                return Err(if sent_any {
+                    format!(
+                        "{error} Text may be partially inserted; review the target before copying."
+                    )
+                } else {
+                    error
                 });
             }
+            inputs.clear();
+            let mut units = [0; 2];
+            for &unit in character.encode_utf16(&mut units).iter() {
+                for flags in [KEYEVENTF_UNICODE, KEYEVENTF_UNICODE | KEYEVENTF_KEYUP] {
+                    inputs.push(INPUT {
+                        r#type: INPUT_KEYBOARD,
+                        Anonymous: INPUT_0 {
+                            ki: KEYBDINPUT {
+                                wVk: VIRTUAL_KEY(0),
+                                wScan: unit,
+                                dwFlags: flags,
+                                time: 0,
+                                dwExtraInfo: 0,
+                            },
+                        },
+                    });
+                }
+            }
+            if !is_current() {
+                return Err("Insertion cancelled. Text may be partially inserted; review the target before copying.".into());
+            }
+            let sent = unsafe { SendInput(&inputs, std::mem::size_of::<INPUT>() as i32) };
+            if sent != inputs.len() as u32 {
+                return Err("Windows blocked some input. Text may be partially inserted; review the target before copying.".into());
+            }
+            sent_any = true;
+            std::thread::sleep(std::time::Duration::from_millis(20));
         }
-        // One batch prevents our own input from interleaving with another batch.
-        // Windows has no atomic "verify focus + type" API; see documented limits.
-        let sent = SendInput(&inputs, std::mem::size_of::<INPUT>() as i32);
-        if sent != inputs.len() as u32 {
-            return Err("Windows blocked some input. Text may be partially inserted; review the target before copying.".into());
+        return Ok(());
+    }
+    let handle = target.rich_edit.unwrap();
+    let mut attempted = false;
+    for character in text.chars() {
+        let result = (|| -> Result<(), String> {
+            verify()?;
+            let mut units = [0; 2];
+            // Modern Notepad corrupted queued VK_PACKET input. Its verified
+            // Unicode RichEdit HWND accepts synchronous WM_CHAR instead.
+            for &unit in character.encode_utf16(&mut units).iter() {
+                attempted = true;
+                let sent = unsafe {
+                    SendMessageTimeoutW(
+                        HWND(handle as *mut _),
+                        WM_CHAR,
+                        WPARAM(unit as usize),
+                        LPARAM(1),
+                        SMTO_ABORTIFHUNG | SMTO_ERRORONEXIT,
+                        1000,
+                        None,
+                    )
+                };
+                if sent.0 == 0 {
+                    return Err("The editor blocked input or did not respond.".into());
+                }
+            }
+            Ok(())
+        })();
+        if let Err(error) = result {
+            return Err(if attempted {
+                format!("{error} Text may be partially inserted; review the target before copying.")
+            } else {
+                error
+            });
         }
     }
     Ok(())
@@ -205,7 +293,48 @@ mod tests {
             window: 0,
             process: 0,
             runtime_id: vec![],
+            rich_edit: None,
         };
-        assert!(insert(&stale, "This must never be typed").is_err());
+        assert!(insert(&stale, "This must never be typed", || true).is_err());
+    }
+
+    #[test]
+    fn submission_keys_and_oversized_text_are_refused_before_target_access() {
+        let target = Target {
+            window: 0,
+            process: 0,
+            runtime_id: vec![],
+            rich_edit: None,
+        };
+        for text in [
+            "line\nbreak",
+            "tab\tkey",
+            "return\rkey",
+            "escape\u{1b}",
+            "null\0",
+        ] {
+            let error =
+                insert(&target, text, || panic!("Target must not be accessed")).unwrap_err();
+            assert!(error.contains("control characters"));
+        }
+        let error = insert(&target, &"x".repeat(10001), || {
+            panic!("Target must not be accessed")
+        })
+        .unwrap_err();
+        assert!(error.contains("too long"));
+    }
+
+    #[test]
+    fn cancelled_session_is_refused_before_target_access() {
+        let target = Target {
+            window: 0,
+            process: 0,
+            runtime_id: vec![],
+            rich_edit: None,
+        };
+        assert_eq!(
+            insert(&target, "Do not send", || false).unwrap_err(),
+            "Insertion cancelled."
+        );
     }
 }

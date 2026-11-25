@@ -1,5 +1,17 @@
 # Roadmap
 
+## Current continuation status - 2026-11-25
+
+- The owner authorized the remaining verification work, then requested automated checks before further guided microphone tests. No microphone was activated in this continuation.
+- Public-source Windows CI passed. A new manually dispatched installer workflow built on a fresh hosted Windows runner; its first cleanup check failed. The check now waits for both directory and registry removal. Rerun and local updated-installer evidence are pending.
+- Native insertion fixtures exposed real Notepad/browser text corruption despite successful input-delivery counts. The source now uses verified synchronous Unicode RichEdit messages for modern Notepad and paced per-character Unicode input elsewhere, with field/session revalidation. The final fixed-text checks passed in Edge and Notepad, including 25-, 133- and 780-character cases, Hindi/accent/emoji text, password/read-only refusal, focus-change refusal and interruption of native insertion. These do not replace a real shortcut/microphone/ASR-to-target acceptance check.
+- Six Rust tests, strict all-target Clippy and formatting passed; 47 Python tests, venv `pip check`, frontend build and npm runtime audit passed. No application dependency was added.
+- Automatic insertion was restored OFF through the real Preferences flow, preserving other preferences. The test app and dev watcher were closed. Do not assume historical PIDs or open test windows are current.
+- Development WebViews rendered and the native engine reached ready after a reload during inspection. The earlier blank initial navigation still has no confirmed root cause; cold-start reliability is not closed.
+- An exact-file worker inventory found missing CTranslate2/tqdm license texts; pinned upstream copies and MPL text are now mapped into installer notices. Full FFmpeg/native corresponding-source and redistribution review remains open. No signing certificate was found in current-user or local-machine stores. No public binary release is justified yet.
+
+Resume pending automated installer/benchmark work from the newest evidence below. Remaining owner-guided gates are inference-time cancellation, recording-in-progress shutdown, physical shortcut-to-target insertion and broader microphone/Hinglish quality. A hosted CI runner does not establish clean consumer-machine or physical hardware acceptance.
+
 ## Repository publication - 2026-11-25
 
 The owner authorized a public source repository at https://github.com/MuditTandon20/FlowForge-AI. Existing local history and the saved desktop lifecycle fixes are being published; generated installers, recordings, reports and model weights remain excluded. Pre-publication checks passed: 47 Python tests, venv `pip check`, four Rust tests and Rust formatting. Remote CI and a packaged public release still require separate evidence. The implementation continuation and remaining interactive checks below remain the resume point.
@@ -51,7 +63,7 @@ npm run tauri -- build --config src-tauri/tauri.release.conf.json
 
 Temporary build investigation scripts/logs and screenshot are ignored under artifacts/. A temporary official sparse-index recovery script was needed for stalled registry freshness/DNS; normal locked downloads then worked. This helper is not an application dependency. Old generated `src-tauri/resources/worker` and `worker-build` folders can be cleaned after checking absolute paths; current source runtime output is `src-tauri/resources/flowforge-worker`.
 
-## Current continuation status - 2026-11-20
+## Previous continuation status - 2026-11-20 (historical)
 
 The checkpoint above is historical. Work resumed when the owner said "continue".
 

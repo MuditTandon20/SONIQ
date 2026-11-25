@@ -158,7 +158,9 @@ fn receive(app: &tauri::AppHandle, value: Value, generation: u64) {
     if let Some((target, text, session)) = insertion {
         let result = target
             .ok_or("No supported target was focused when recording started.".into())
-            .and_then(|target| native::insert(&target, &text));
+            .and_then(|target| {
+                native::insert(&target, &text, || shared.lock().unwrap().session == session)
+            });
         let mut state = shared.lock().unwrap();
         if state.session != session {
             return;

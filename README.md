@@ -34,6 +34,8 @@ Settings are validated and atomically replaced under `%APPDATA%\ai.flowforge.des
 
 ## Build an installer
 
+Automated desktop checks on 2026-11-25 exercised the actual insertion code with dedicated Edge and Notepad fixtures, including Hindi characters, accented text, emoji, 133- and 780-character text, focus changes, password/read-only refusal and cancellation of native insertion. These checks used fixed test strings and no microphone. Modern Notepad required synchronous delivery to its verified Unicode editor window; other fields receive paced Unicode input. Each character rechecks focus, modifiers and the active session. Interrupted insertion can leave text already delivered in the target; cancellation does not undo it. Review the field before copying again.
+
 Close the running FlowForge desktop app before packaging, and wait for packaging to finish before launching the release executable.
 
 ```powershell
@@ -54,6 +56,17 @@ cargo fmt --manifest-path src-tauri/Cargo.toml --check
 ```
 
 The Windows GitHub Actions workflow runs Python, frontend and Rust checks; configuring a workflow is separate from observing it pass remotely.
+
+The initial published source passed [remote Windows checks](https://github.com/MuditTandon20/FlowForge-AI/actions/runs/45575160033). The separate **Windows installer smoke** workflow builds and installs on a fresh hosted runner, checks the frozen worker with external Python removed from its PATH and an empty offline model cache, then uninstalls. Hosted-runner checks do not establish clean consumer-machine, microphone or speech-quality acceptance. No binary is automatically published.
+
+To repeat insertion acceptance, leave the dedicated test windows untouched while the check runs:
+
+```powershell
+cargo build --locked --manifest-path src-tauri/Cargo.toml --example insertion_probe
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-native-insertion.ps1
+```
+
+The helper invokes the production native field code and accepts only fixed fixture cases. It opens isolated Edge and Notepad fixtures under ignored `artifacts/`, never opens the microphone, and never reads existing documents or clipboard contents.
 
 ## Setup (Windows PowerShell)
 

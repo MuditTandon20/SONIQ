@@ -39,3 +39,7 @@ On the 11-second JFK clip, independent 4/8/12-second windows with beam 1 and bot
 Windows peak working set covers the entire experiment process across configurations. It is not per-model memory and excludes Rust/WebView2. Repeating one clip estimates timing variation, not general English/Hindi/Hinglish accuracy. No fine-tuning or LLM claim is justified without licensed held-out examples and meaning-preservation checks.
 
 Practice explaining stale-result safety, callback lock contention, COM/handle ownership, final latency with preview on/off, and installer verification on a machine without Python. Current code provides concrete examples.
+
+## Input delivery is not text acceptance
+
+The actual insertion fixtures exposed a boundary that a successful `SendInput` count cannot verify: the target app can receive input events and still produce different text. `native.rs` now uses synchronous character messages only for a verified Unicode RichEdit window and paced per-character input elsewhere. It checks field identity and cancellation between characters. The fixed-text helper verifies the result in its own generated documents; application code never reads target text. Already delivered characters cannot be undone safely by Cancel.
