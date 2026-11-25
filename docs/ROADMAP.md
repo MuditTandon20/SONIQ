@@ -2,9 +2,11 @@
 
 ## SONIQ rename - 2026-11-26
 
+The active local workspace directory could not be renamed: Windows returned that another process was using it. The attempted directory rename made no filesystem change; no process was forcibly closed and no compatibility junction was created. GitHub and current project/component names were renamed independently. The local directory-path rename remains dependent on releasing that workspace lock.
+
 The owner requested a complete project/repository rebrand to SONIQ and explicitly authorized discarding the open preview and restarting. GitHub repository identity/history were preserved while its name and local origin changed to `MuditTandon20/SONIQ`. Current app/window names, application identifier, mutex, Rust/npm/Python packages, CLI, worker, installer, tests, scripts, copyright label and repository links now use SONIQ/soniq. The Python package is `soniq/`; `python -m soniq` and the installed `soniq` command retain the existing subcommands/options. No recognition or capture behavior was changed.
 
-The saved preferences were copied atomically into the new application settings directory, retaining shortcut, preferred microphone, model, language and other options; only the obsolete product-name vocabulary hint was updated. No audio or transcript data was copied. The owner-approved previous app closed normally. The renamed source passed 47 Python tests, venv pip check, nine Rust tests, strict Clippy and frontend build; the Python CLI was also exercised from outside the checkout. Full `npm run package` rebuilt the renamed frozen worker and SONIQ NSIS installer successfully. Installer/native checks and the source push are the remaining rename completion steps.
+The saved preferences were copied atomically into the new application settings directory, retaining shortcut, preferred microphone, model, language and other options; only the obsolete product-name vocabulary hint was updated. No audio or transcript data was copied. The owner-approved previous app closed normally. The renamed source passed 47 Python tests, venv pip check, nine Rust tests, strict Clippy and frontend build; the Python CLI was also exercised from outside the checkout. Full `npm run package` rebuilt the renamed frozen worker and SONIQ NSIS installer successfully. The rename was committed and pushed as `63bc795`; SONIQ installer installation, resource hashes, offline worker operation without external Python and uninstall passed. A separate real frozen-worker check loaded cached base offline and transcribed an existing licensed fixture with VAD and verbatim output, without saving the hypothesis. The live SONIQ app reached ready/off with Ctrl+Space registered and the saved microphone preference intact. No microphone was activated.
 
 Historical verification entries below refer to their recorded commits and hashes. Old component labels are generalized or updated for navigation; those entries do not establish results for the newly renamed installer or vocabulary term.
 
@@ -65,7 +67,7 @@ Exact stopping point and next work:
 Development commands:
 
 ```powershell
-Set-Location <project-checkout>
+Set-Location .
 .\.venv\Scripts\python.exe -m pytest -q
 cargo test --locked --manifest-path src-tauri/Cargo.toml
 npm run desktop
