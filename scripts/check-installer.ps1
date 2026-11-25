@@ -16,13 +16,17 @@ try {
     if (-not $process.WaitForExit(60000)) { throw 'Installer timed out.' }
     if ($process.ExitCode -ne 0) { throw "Installer exit code $($process.ExitCode)." }
     $installed = $true
-    foreach ($relative in @('flowforge-ai.exe','worker/flowforge-worker.exe','LICENSE','THIRD_PARTY_NOTICES.md','uninstall.exe')) {
+    foreach ($relative in @('flowforge-ai.exe','worker/flowforge-worker.exe','LICENSE','THIRD_PARTY_NOTICES.md','licenses/CTranslate2-4.9.0-LICENSE.txt','licenses/tqdm-4.70.1-LICENCE.txt','licenses/MPL-2.0.txt','uninstall.exe')) {
         if (-not (Test-Path -LiteralPath (Join-Path $installRoot $relative) -PathType Leaf)) { throw "Missing resource $relative." }
+    }
+    foreach ($source in Get-ChildItem -LiteralPath (Join-Path $projectRoot 'docs/licenses') -File) {
+        if ((Get-FileHash -LiteralPath $source.FullName).Hash -ne (Get-FileHash -LiteralPath (Join-Path $installRoot ('licenses/' + $source.Name))).Hash) { throw 'Supplementary license hash mismatch.' }
     }
     foreach ($relative in @('LICENSE','THIRD_PARTY_NOTICES.md')) {
         $source = if ($relative -eq 'LICENSE') { Join-Path $projectRoot 'LICENSE' } else { Join-Path $projectRoot 'docs/THIRD_PARTY_NOTICES.md' }
         if ((Get-FileHash -LiteralPath $source).Hash -ne (Get-FileHash -LiteralPath (Join-Path $installRoot $relative)).Hash) { throw "Notice hash mismatch: $relative." }
     }
+    Write-Output 'Installed executable, worker and notice hashes verified.'
     $info = New-Object System.Diagnostics.ProcessStartInfo
     $info.FileName = Join-Path $installRoot 'worker/flowforge-worker.exe'
     $info.WorkingDirectory = $testRoot
@@ -44,6 +48,7 @@ try {
     if (-not $response.Wait(60000) -or -not $response.Result) { throw 'Frozen worker did not respond.' }
     $message = $response.Result | ConvertFrom-Json
     if ($message.event -ne 'error' -or $message.id -ne 1 -or $message.message -notlike '*Cannot load model*tiny*Use --download*') { throw 'Expected the explicit offline missing-model response from the installed speech engine.' }
+    Write-Output 'Installed frozen worker handled the offline missing-model request without external Python.'
     $worker.StandardInput.WriteLine('{"command":"shutdown"}')
     if (-not $worker.WaitForExit(10000) -or $worker.ExitCode -ne 0) { throw 'Frozen worker did not shut down successfully.' }
 } finally {
@@ -54,8 +59,8 @@ try {
         $uninstall = Start-Process -FilePath (Join-Path $installRoot 'uninstall.exe') -ArgumentList '/S' -PassThru -WindowStyle Hidden
         if (-not $uninstall.WaitForExit(30000)) { throw 'Uninstaller launcher timed out.' }
         $deadline = [DateTime]::UtcNow.AddSeconds(30)
-        while ((Test-Path -LiteralPath $installRoot) -and [DateTime]::UtcNow -lt $deadline) { Start-Sleep -Milliseconds 250 }
-        if ((Test-Path -LiteralPath $installRoot) -or (Test-Path -LiteralPath $registryPath)) { throw 'Uninstall did not remove the installation and registration.' }
+        while (((Test-Path -LiteralPath $installRoot) -or (Test-Path -LiteralPath $registryPath)) -and [DateTime]::UtcNow -lt $deadline) { Start-Sleep -Milliseconds 250 }
+        if ((Test-Path -LiteralPath $installRoot) -or (Test-Path -LiteralPath $registryPath)) { throw ("Uninstall incomplete: directory=" + (Test-Path -LiteralPath $installRoot) + "; registration=" + (Test-Path -LiteralPath $registryPath) + "; launcher exit=" + $uninstall.ExitCode) }
     }
 }
 [PSCustomObject]@{Install=$true;NoticeHashes=$true;FrozenWorkerWithoutExternalPython=$true;OfflineMissingModel=$true;Uninstall=$true;MicrophoneActivated=$false;ModelDownloaded=$false;InstallerSHA256=(Get-FileHash -LiteralPath $installer).Hash;SignatureStatus=(Get-AuthenticodeSignature -LiteralPath $installer).Status.ToString()} | ConvertTo-Json -Compress

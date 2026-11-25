@@ -3,7 +3,8 @@
     "resources": {
       "resources/flowforge-worker/": "worker/",
       "../LICENSE": "LICENSE",
-      "../docs/THIRD_PARTY_NOTICES.md": "THIRD_PARTY_NOTICES.md"
+      "../docs/THIRD_PARTY_NOTICES.md": "THIRD_PARTY_NOTICES.md",
+      "../docs/licenses/": "licenses/"
     }
   }
 }

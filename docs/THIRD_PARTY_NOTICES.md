@@ -16,3 +16,15 @@ This software uses FFmpeg libraries through PyAV. The installed PyAV 17.1.0 whee
 Before a public binary release, complete the dependency inventory and corresponding-source/notice obligations for the exact bundled native builds and transitive libraries. Do not label the entire installer “MIT only” or claim that packaging success establishes redistribution compliance. Public distribution, signing and clean-machine verification remain release gates. No public release was published by this local build.
 
 Models are not bundled. The desktop permits multilingual tiny/base/small from faster-whisper's identified Systran Hugging Face repositories. Review each model card and upstream Whisper license before redistributing weights. Custom datasets require consent or suitable licenses; the local JFK evaluation audio is not included in this application package.
+
+## Supplementary license evidence (2026-11-25)
+
+The existing frozen worker inventory contains 13 distribution metadata directories and 137 executable/native/model files. This does not enumerate every dependency. ONNX Runtime's license and third-party notices are present inside its package directory; they must not be inferred missing solely from its dist-info directory. CTranslate2 and tqdm license texts were absent from the checked package, so the installer now includes supplementary upstream texts under `licenses/`:
+
+- `CTranslate2-4.9.0-LICENSE.txt`: https://github.com/OpenNMT/CTranslate2/blob/v4.9.0/LICENSE, SHA-256 `54aa79d9fe3c09e67a16dcd95b9e88676405a6ec174efda31036983cf7672ecb`.
+- `tqdm-4.70.1-LICENCE.txt`: https://github.com/tqdm/tqdm/blob/v4.70.1/LICENCE, SHA-256 `fcff87c3a47ce8028a8512aa182d4fcf0ad1c90544ee75cf9b343684cac194de`.
+- `MPL-2.0.txt`: https://www.mozilla.org/media/MPL/2.0/index.txt, SHA-256 `3f3d9e0024b1921b067d6f7f88deb4a60cbe7a78e76c64e3f1d7fc3b779b9d04`.
+
+These versioned texts cover identified gaps in this build's notices. Refresh the inventory and verify applicability when changing dependencies. Exact FFmpeg corresponding source/build settings and remaining native/transitive obligations still require review before binary publication. See https://ffmpeg.org/legal.html. No audit completion is claimed.
+
+Run `python scripts/inventory-worker.py --worker src-tauri/resources/flowforge-worker --output reports/worker-inventory.json` to create a new, non-overwriting local report. Reports are ignored by Git.
