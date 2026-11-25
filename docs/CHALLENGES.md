@@ -284,3 +284,28 @@ The updated production-source commit `8fc5e10` passed Windows tests/build/strict
 The rebuilt local installer also passed those isolated offline checks. Installed native readiness, single-instance protection, normal close/frozen-worker exit and forced idle close/frozen-worker exit passed. A subsequent uninstall from the OneDrive workspace smoke location left the installation/registration intact on its first attempt; another silent invocation exited 0 and removed both. The same native lifecycle and uninstall sequence then passed from a newly created TEMP installation outside OneDrive. The exact cause of the intermittent workspace-path uninstall remains undiagnosed; do not claim that OneDrive was proven responsible or that every uninstall path is certified.
 
 The inventory matcher initially missed tqdm's existing `licenses/LICENCE` because it checked only the American spelling. It now checks both spellings and identifies only CTranslate2 as lacking a license file within its checked package/metadata directories. Supplementary versioned texts remain installed alongside the worker. The report still does not establish a complete license audit.
+
+## Licensed Hindi pilot and real frozen-worker integration (2026-11-25)
+
+Twenty clips (234.66 seconds; 527 normalized reference words) were taken in deterministic first-WAV-member order from the Hindi test archive of [Google FLEURS](https://huggingface.co/datasets/google/fleurs), revision `70bb2e84b976b7e960aa89f1c648e09c59f894dd`, licensed CC-BY-4.0. The publisher's independently supplied raw transcriptions were used as gold references; this continuation did not manually listen-audit them. This is a small read-speech subset, not a representative dictation or Hinglish acceptance set. The rows API returned HTTP 500 and the first-rows API returned 501; the pinned original TSV and streaming TAR archive were accessible and required only standard-library tools. Only the first 20 matched WAV members were downloaded, without selection by recognition quality.
+
+| Model / pipeline | VAD | Corpus WER | Corpus CER |
+| --- | --- | ---: | ---: |
+| tiny / current source | off | 107.97% | 95.73% |
+| base / current source | off | 106.64% | 91.00% |
+| small / actual CLI | off | 62.43% | 29.05% |
+| small / frozen production worker | on | 57.50% | 25.30% |
+
+All used CPU, INT8, explicit Hindi and beam 5, with verbatim output and no vocabulary hints. WER can exceed 100% because insertions count as errors. A scalar-only diagnostic on one base-model clip confirmed a multilingual model, matching decoded/publisher audio duration and nonzero audio levels, but its returned letters were largely Arabic script rather than the gold Devanagari script. No general root cause or automatic correction is established.
+
+Tiny/base used cached models. The small comparison invoked the actual CLI with explicit `--download`, fetching the existing supported Systran small model; it did not add an application dependency or change owner preferences. The frozen worker then loaded that cached small model offline once and completed twenty real NDJSON transcription commands with VAD enabled, preserving verbatim text. It shut down afterward. The source and frozen runs differ in both pipeline and VAD setting, so this is not an isolated VAD-benefit experiment. Some runs overlapped packaging CPU load; do not use their timings as an isolated performance comparison.
+
+Audio, public gold-reference manifest, clip hashes/provenance and aggregate reports remain ignored under recordings/, artifacts/ and reports/. Recognition hypotheses were discarded from persisted reports; no owner recording, microphone activation, audio upload or transcript-history feature was involved. The reported improvement does not establish acceptable Hindi quality: errors remain high even in the small/VAD packaged-worker run. Hinglish, broader speakers/devices and owner-guided microphone quality remain open. No LLM processing or fine-tuning is justified by these results alone.
+
+## Final automated checkpoint (2026-11-25)
+
+- Latest code checks passed remotely at `61ce119`: https://github.com/MuditTandon20/FlowForge-AI/actions/runs/45586073415. Production code and installer smoke evidence remain linked above.
+- After correcting the inventory wording, a final unsigned installer rebuilt successfully: 73,712,022 bytes; SHA-256 `2DA24C9355548BF8F5C99313B223A28DBBE9AE09D287E16C3AD86C30181AA5B3`. Its install, all notice hashes, installed frozen-worker offline missing-model behavior without external Python, and uninstall passed locally. No microphone or model download was used in this installer check.
+- Python checks again passed: 47 tests and venv pip check. Generated recordings, manifests, reports and diagnostic scripts were explicitly confirmed ignored by Git.
+- A native development launch with `npm run dev -- --force` as Tauri's before-dev command reached the ready/off state without requesting a reload, 24.18 seconds after the desktop process started. The app closed normally with exit 0 and no surviving app/worker. A WebView shutdown class-unregistration diagnostic (1412) appeared on stderr; no cause is established for that message or the older blank launch. This verifies the observed forced-reoptimization launch, not every cold-machine startup.
+- Trusted signing, an actual clean consumer Windows machine, full exact-native-build redistribution evidence, broader language quality and the remaining owner-guided capture checks remain distinct gates. The public GitHub repository contains source, not a verified public installer release.
